@@ -9,13 +9,14 @@ import java.util.List;
  * to encode readable characters into a morse code character
  * and decode morse code characters to readable characters. 
  * @author Jason J. 
- * @version 0.1.0-20140512
+ * @version 0.2.0-20140513
  */
 public interface MorseDictionary {
 	/** Value representing a dot. */
-	final static public boolean DOT = false;
+	final static public int DOT = 1;
 	/** Value representing a dash. */
-	final static public boolean DASH = true;
+	final static public int DASH = 3;
+		
 	
 	/** Decodes a Morse code character into a readable character.
 	 * @param mCharacter The Morse Code character to decode.
@@ -42,7 +43,7 @@ public interface MorseDictionary {
 	 * @version 0.1.0-20140512
 	 */
 	static public class MorseCharacter {
-		private List<Boolean> pattern = new ArrayList<Boolean>();
+		private List<Integer> pattern = new ArrayList<Integer>();
 		
 		protected MorseCharacter() {}
 		/** Creates pattern from array
@@ -50,8 +51,8 @@ public interface MorseDictionary {
 		 * Dashes are represented as {@link MorseDictionary#DASH}, 
 		 * dots as {@link MorseDictionary#DOT}.
 		 */
-		protected MorseCharacter(Boolean pattern[]){
-			this.pattern = new ArrayList<Boolean>(Arrays.asList(pattern));
+		protected MorseCharacter(Integer pattern[]){
+			this.pattern = new ArrayList<Integer>(Arrays.asList(pattern));
 		}
 		
 		/** Sets pattern.
@@ -59,7 +60,7 @@ public interface MorseDictionary {
 		 * Dashes are represented as {@link MorseDictionary#DASH}, 
 		 * dots as {@link MorseDictionary#DOT}.
 		 */
-		protected void setPattern(List<Boolean> pattern ){
+		protected void setPattern(List<Integer> pattern ){
 			this.pattern = pattern;
 		}
 	
@@ -69,16 +70,16 @@ public interface MorseDictionary {
 		 * Dashes are represented as {@link MorseDictionary#DASH}, 
 		 * dots as {@link MorseDictionary#DOT}.
 		 */
-		public List<Boolean> getPattern(){
+		public List<Integer> getPattern(){
 			return this.pattern;
 		}
 		
 		/**
 		 * @author Jason J.
-		 * @version 0.1.0-20140512
+		 * @version 0.2.0-20140513
 		 */
 		static public class Builder {
-			private List<Boolean> bpattern = new ArrayList<Boolean>();
+			private List<Integer> bpattern = new ArrayList<Integer>();
 			/** Creates a {@link MorseCharacter} with the arguments supplied to this 
 			 * builder. 
 			 * @return {@link MorseCharacter} 
