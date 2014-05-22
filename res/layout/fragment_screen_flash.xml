@@ -1,0 +1,26 @@
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    
+    android:layout_width="match_parent"
+    android:layout_height="match_parent" 
+    android:background="#000"
+    >
+
+    <Button
+        android:id="@+id/com_ovrhere_morseflash_frag_flashscreen_button_cancelMessage"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_alignParentBottom="true"
+        android:layout_centerHorizontal="true"
+        android:text="@string/com_ovrhere_button_cancel" />
+
+    <FrameLayout
+        android:id="@+id/com_ovrhere_morseflash_frag_flashscreen_background"
+        android:layout_width="match_parent"
+    	android:layout_height="match_parent" 
+    	android:background="#fff"
+        android:layout_centerHorizontal="true"
+        android:layout_above="@+id/com_ovrhere_morseflash_frag_flashscreen_button_cancelMessage" >
+    </FrameLayout>
+    
+</RelativeLayout>
