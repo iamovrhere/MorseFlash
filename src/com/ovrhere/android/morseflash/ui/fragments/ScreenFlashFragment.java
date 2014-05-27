@@ -20,7 +20,7 @@ import com.ovrhere.android.morseflash.R;
  * Used to show a fully white or black screen.
  * Parent Activity must implement {@link OnFragmentInteraction}.
  * 
- * @version 0.1.0-20140522
+ * @version 0.2.0-20140527
  * @author Jason J.
  */
 public class ScreenFlashFragment extends Fragment implements OnClickListener{
@@ -80,6 +80,7 @@ public class ScreenFlashFragment extends Fragment implements OnClickListener{
 		if (savedInstanceState != null){
 			this.screenOn = savedInstanceState.getBoolean(KEY_SCREEN_STATE);
 		}
+		setRetainInstance(true);
 	}
 	
 	@Override
@@ -108,6 +109,14 @@ public class ScreenFlashFragment extends Fragment implements OnClickListener{
 		flashBackground(screenOn); 
 		return v;
 	}
+	
+	@Override
+	public void onActivityCreated(Bundle savedInstanceState) {
+		super.onActivityCreated(savedInstanceState);
+		fragmentInteractionListener.onFragmentViewLoaded();
+	}
+	
+	
 	/** Sets the background to be either on or off.
 	 * @param on if <code>true</code> set flash on (white), 
 	 * otherwise turns background off.
@@ -126,12 +135,14 @@ public class ScreenFlashFragment extends Fragment implements OnClickListener{
 	/**
 	 * Interface required by Activity to implement.
 	 * @author Jason J.
-	 * @version 0.1.0-20140515
+	 * @version 0.2.0-20140527
 	 */
 	static public interface OnFragmentInteraction {
 		/** Called when the cancel button is pressed.
 		 * @param frag The fragment it is being called from. */
-		public void onCancelButton(ScreenFlashFragment frag);
+		public void onCancelButton();
+		/** Called when fragment has finished loading. */
+		public void onFragmentViewLoaded();
 	}
 	
 	/////////////////////////////////////////////////////////////////////////////////////////////////
@@ -142,7 +153,7 @@ public class ScreenFlashFragment extends Fragment implements OnClickListener{
 	public void onClick(View v) {
 		switch (v.getId()){
 			case R.id.com_ovrhere_morseflash_frag_flashscreen_button_cancelMessage:
-				fragmentInteractionListener.onCancelButton(this);
+				fragmentInteractionListener.onCancelButton();
 				break;			
 		}
 	}
