@@ -18,7 +18,7 @@ import com.ovrhere.android.morseflash.morsecode.dictionaries.MorseDictionary.Mor
  * </p> 
  * 
  * @author Jason J.
- * @version 0.1.0-20140527
+ * @version 0.1.1-20140527
  */
 public class MorseTranscriber implements IMorseTranscriber {
 	/** The tag used for logging. */
@@ -67,6 +67,9 @@ public class MorseTranscriber implements IMorseTranscriber {
 	
 	/** Whether the message should continue processing. Default false. */
 	volatile private boolean continueMessageProcessing = false;
+	/** Whether the message is currently sending. */
+	volatile private boolean messageIsSending = false;
+	
 	/** Whether or not to play the message again when completed. Default false. */
 	volatile private boolean loopMessage = false; 
 
@@ -114,7 +117,9 @@ public class MorseTranscriber implements IMorseTranscriber {
 	}
 	@Override
 	public void setUnitTime(int unitTime) {
-		this.unitTime = unitTime;	
+		this.unitTime = unitTime;
+		morseDotInterval = unitTime;
+		morseSymbolInterval = unitTime;
 		morseDashInterval = unitTime * REL_INTERVAL_DASH;
 		morseCharInterval = unitTime * REL_INTERVAL_CHARACTER;		
 		morseWordInterval = unitTime * REL_INTERVAL_WORD;
@@ -149,14 +154,18 @@ public class MorseTranscriber implements IMorseTranscriber {
 	@Override
 	public boolean cancel(){		
 		if (continueMessageProcessing){
-			continueMessageProcessing = false;
-			synchronized (signalTimer) {
+			continueMessageProcessing = false;			
+			return true;
+		}	
+		if (messageIsSending){
+			messageIsSending = false;
+			synchronized (signalTimer) {				
 				signalTimer.cancel();
 				signalTimer.purge();
 				signalTimer = new Timer();
 			}
 			return true;
-		}		
+		}
 		return false;
 	}
 		
@@ -183,7 +192,7 @@ public class MorseTranscriber implements IMorseTranscriber {
 		}		
 		return charList;
 	}
-	/** Parases a morse word and schedules the times to state/end dots+dashes.
+	/** Parses a morse word and schedules the times to state/end dots+dashes.
 	 * @param start The starting time for the word.
 	 * @param morseWord The word to decode into characters and dots+dashes.
 	 */
@@ -205,7 +214,11 @@ public class MorseTranscriber implements IMorseTranscriber {
 		final List<Integer> pattern = morseCharacter.getPattern();
 		int index = 0;
 		for (Integer symbol : pattern) {
+			if (!continueMessageProcessing){ //if we are not to continue
+				break;
+			}
 			index++;
+			
 			MorseSignalTask startSignal = new MorseSignalTask(true, m_SignalListener);
 			MorseSignalTask endSignal = new MorseSignalTask(false, m_SignalListener);
 			Date end = null;
@@ -305,8 +318,10 @@ public class MorseTranscriber implements IMorseTranscriber {
 		 */
 		private void sendMorseMessage(final List<ArrayList<MorseCharacter>> message) {
 			synchronized (signalTimer) {
+				messageIsSending = true;
 				if (!continueMessageProcessing){
 					//we have finished
+					messageIsSending = false;
 					if (m_MorseListener != null){
 						m_MorseListener.onMorseCompleted();
 					}
