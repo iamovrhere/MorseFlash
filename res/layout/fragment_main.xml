@@ -8,9 +8,39 @@
     android:paddingTop="@dimen/activity_vertical_margin"
     tools:context="com.ovrhere.android.morseflash.MainActivity$PlaceholderFragment" >
 
-    <TextView
+    <EditText
+        android:id="@+id/com_ovrhere_morseflash_frag_main_editext_textToMorse_input"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_alignParentTop="true"
+        android:layout_centerHorizontal="true"
+        android:layout_marginTop="20dp"
+        android:ems="10"
+        android:lines="2"
+        android:maxLength="200"        
+        android:inputType="textMultiLine" >
+
+        <requestFocus />
+    </EditText>
+
+    <CheckBox
+        android:id="@+id/com_ovrhere_morseflash_frag_main_checkbox_useCameraLight"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="@string/hello_world" />
+        android:layout_below="@+id/com_ovrhere_morseflash_frag_main_editext_textToMorse_input"
+        android:layout_centerHorizontal="true"
+        android:text="@string/com_ovrhere_checkbox_camlight" 
+        android:enabled="false"
+        android:visibility="gone"
+        />
+
+    <Button
+        android:id="@+id/com_ovrhere_morseflash_frag_main_button_send"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_below="@+id/com_ovrhere_morseflash_frag_main_checkbox_useCameraLight"
+        android:layout_centerHorizontal="true"
+        android:layout_marginTop="12dp"
+        android:text="@string/com_ovrhere_sendMessage" />
 
 </RelativeLayout>
