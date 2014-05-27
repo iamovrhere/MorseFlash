@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- The app's version of black for backgrounds etc. -->
+    <color name="com_ovrhere_morseflash_black">#080808</color>
+    <!-- The app's version of white for backgrounds etc. -->
+    <color name="com_ovrhere_morseflash_white">#fcfcfc</color>
+    <!-- We don't use true black and white in most cases as both tend 
+    to be harsher on the eyes. -->
+    <eat-comment />
+    
+    
+</resources>
