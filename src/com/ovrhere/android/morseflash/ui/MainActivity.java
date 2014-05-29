@@ -13,6 +13,9 @@ import android.view.View.OnClickListener;
 import android.view.ViewGroup;
 import android.view.WindowManager;
 import android.widget.Button;
+import android.widget.CheckBox;
+import android.widget.CompoundButton;
+import android.widget.CompoundButton.OnCheckedChangeListener;
 import android.widget.EditText;
 
 import com.ovrhere.android.morseflash.R;
@@ -26,7 +29,7 @@ import com.ovrhere.android.morseflash.ui.fragments.ScreenFlashFragment.OnFragmen
  * The main activity for the application. This is the primary entry point
  * of the app.
  * @author Jason J.
- * @version 0.1.0-20140527
+ * @version 0.2.0-20140528
  */
 public class MainActivity extends ActionBarActivity implements 
 	ScreenFlashFragment.OnFragmentInteraction,
@@ -38,9 +41,15 @@ public class MainActivity extends ActionBarActivity implements
 	final static private String MORSE_TRANSCRIBER_TAG = 
 			MorseTranscriberHeadlessFragment.class.getName();
 	
-	/** The current fragment tag. String. */
+	/** Bundle key: The current fragment tag. String. */
 	final static private String KEY_CURRENT_FRAG_TAG = 
-			CLASS_NAME + ".KEY_CURRENT_FRAG_TAG";	
+			CLASS_NAME + ".KEY_CURRENT_FRAG_TAG";
+	/** Bundle key: Whether the screen is fullscreen. Boolean. */
+	final static private String KEY_IS_FULLSCREEN = 
+			CLASS_NAME + ".KEY_IS_FULLSCREEN";		
+	/** Bundle key: The message for the input screen. String. */
+	final static private String KEY_INPUT_MESSAGE = 
+			CLASS_NAME + ".KEY_INPUT_MESSAGE";	
 	/////////////////////////////////////////////////////////////////////////////////////////////////
 	/// end constants
 	////////////////////////////////////////////////////////////////////////////////////////////////
@@ -54,6 +63,10 @@ public class MainActivity extends ActionBarActivity implements
 	/** The current fragment tag. Top level is {@link MainFragment#TAG}. 
 	 * Default empty string.*/
 	private String currentFragmentTag = "";
+	/** Whether the screen is currently fullscreen. */
+	private boolean isFullscreen = false;
+	/** The input message for the main fragment. */
+	private String inputMessage = "";
 	
 	/////////////////////////////////////////////////////////////////////////////////////////////////
 	/// End members
@@ -63,6 +76,8 @@ public class MainActivity extends ActionBarActivity implements
 	protected void onSaveInstanceState(Bundle outState) {
 		super.onSaveInstanceState(outState);
 		outState.putString(KEY_CURRENT_FRAG_TAG, currentFragmentTag);
+		outState.putBoolean(KEY_IS_FULLSCREEN, isFullscreen);
+		outState.putString(KEY_INPUT_MESSAGE, inputMessage);
 	}
 	
 	@Override
@@ -91,6 +106,13 @@ public class MainActivity extends ActionBarActivity implements
 			setFragToDefault();
 		} else {
 			currentFragmentTag = savedInstanceState.getString(KEY_CURRENT_FRAG_TAG);
+			//if stored state is fullscreen, maintain it.
+			if (savedInstanceState.getBoolean(KEY_IS_FULLSCREEN)){
+				setFullscreen(true);
+			}
+			if (savedInstanceState.getString(KEY_INPUT_MESSAGE) != null){
+				inputMessage = savedInstanceState.getString(KEY_INPUT_MESSAGE);
+			}
 		}
 	}	
 	@Override
@@ -155,28 +177,47 @@ public class MainActivity extends ActionBarActivity implements
 
 	/**
 	 * The fragment for main. Activity must implement
-	 * {@link OnFragmentInteraction} 
+	 * {@link OnFragmentInteraction}.
+	 * 
+	 *  @version 0.1.0-20140529
 	 */
 	public static class MainFragment extends Fragment 
-		implements OnClickListener{
+		implements OnClickListener, OnCheckedChangeListener {
+		/** The class name. */
+		final static private String CLASS_NAME = MainFragment.class.getSimpleName();
 		/** The tag used in fragments. */
 		final static public String TAG = MainFragment.class.getName();
-		/** The message input content.String. */
+		
+		/** Bundle: The message input content.String. */
 		final static private String KEY_MESSAGE_INPUT_CONTENT = 
-				MainFragment.class.getName() + ".KEY_MESSAGE_INPUT_CONTENT";
-
-		public MainFragment() {
-		}
+				CLASS_NAME + ".KEY_MESSAGE_INPUT_CONTENT";
+		final static private String KEY_LOOP_MESSAGE_CHECKBOX = 
+				CLASS_NAME + ".KEY_LOOP_MESSAGE_CHECKBOX";
 		
 		/** Sends the message. */
-		private Button sendMessage = null;
+		private Button b_sendMessage = null;
 		/** The message input for main. */
-		private EditText messageInput = null;
+		private EditText et_messageInput = null;		
+		/** The checkbox determine if to loop the message. */
+		private CheckBox cb_loopMessage = null;
+		
+		public MainFragment() {}		
+		
+		static public MainFragment newInstance(String startingMessage){
+			MainFragment fragment = new MainFragment();
+			Bundle args = new Bundle();
+			args.putString(KEY_MESSAGE_INPUT_CONTENT, startingMessage);
+			
+			fragment.setArguments(args);
+			return fragment;
+		}
+		
 		
 		@Override
 		public void onSaveInstanceState(Bundle outState) {
 			super.onSaveInstanceState(outState);
-			outState.putString(KEY_MESSAGE_INPUT_CONTENT, messageInput.getText().toString());
+			outState.putString(KEY_MESSAGE_INPUT_CONTENT, et_messageInput.getText().toString());
+			outState.putBoolean(KEY_LOOP_MESSAGE_CHECKBOX, cb_loopMessage.isChecked());
 		}
 	
 		@Override
@@ -184,28 +225,56 @@ public class MainActivity extends ActionBarActivity implements
 				Bundle savedInstanceState) {
 			View rootView = inflater.inflate(R.layout.fragment_main, container,
 					false);
-			messageInput = (EditText) rootView.findViewById(R.id.com_ovrhere_morseflash_frag_main_editext_textToMorse_input);
-			sendMessage = (Button) rootView.findViewById(R.id.com_ovrhere_morseflash_frag_main_button_send);
-			sendMessage.setOnClickListener(this);
+			et_messageInput = (EditText) 
+					rootView.findViewById(R.id.com_ovrhere_morseflash_frag_main_editext_textToMorse_input);
+			b_sendMessage = (Button) 
+					rootView.findViewById(R.id.com_ovrhere_morseflash_frag_main_button_send);
+			b_sendMessage.setOnClickListener(this);
+			cb_loopMessage = (CheckBox) 
+					rootView.findViewById(R.id.com_ovrhere_morseflash_frag_main_checkbox_loopMessage);
+			cb_loopMessage.setOnCheckedChangeListener(this);
 			
+			if (getArguments() != null) {
+				Bundle args = getArguments();
+				et_messageInput.setText(
+						args.getString(KEY_MESSAGE_INPUT_CONTENT)
+						);
+			}
 			if (savedInstanceState != null){
-				messageInput.setText(
+				et_messageInput.setText(
 							savedInstanceState.getString(KEY_MESSAGE_INPUT_CONTENT)
+						);
+				cb_loopMessage.setChecked(
+							savedInstanceState.getBoolean(KEY_LOOP_MESSAGE_CHECKBOX)
 						);
 			}
 			return rootView;
 		}
 		
 		@Override
-		public void onClick(View arg0) {
-			switch (arg0.getId()){
+		public void onClick(View v) {
+			switch (v.getId()){
 			case R.id.com_ovrhere_morseflash_frag_main_button_send:
+				//prevent double taps
+				b_sendMessage.setEnabled(false);
+				//send message
 				((MainActivity) getActivity())._onSendButton(
-							messageInput.getText().toString()
+							et_messageInput.getText().toString(),
+							cb_loopMessage.isChecked()
 						);
 				
 				break;
 			}			
+		}
+		
+		@Override
+		public void onCheckedChanged(CompoundButton buttonView,
+				boolean isChecked) {
+			switch	(buttonView.getId()){
+			case R.id.com_ovrhere_morseflash_frag_main_checkbox_loopMessage:
+				// TODO: set a preference here.
+				break;
+			}
 		}
 		
 		/////////////////////////////////////////////////////////////////////////////////////////////////
@@ -226,7 +295,7 @@ public class MainActivity extends ActionBarActivity implements
 	/** Switches the fragment back to the default. */
 	private void setFragToDefault(){
 		setFragmentAsContent(
-				new MainFragment(),
+				MainFragment.newInstance(inputMessage),
 				MainFragment.class.getName()
 				);
 	}
@@ -251,10 +320,13 @@ public class MainActivity extends ActionBarActivity implements
 	
 	/** The action to perform when the send button is sent. 
 	 * @param message The raw message to pass on.
+	 * @param loop Whether or not to loop the message. 
 	 */
-	private void _onSendButton(String message) {
+	private void _onSendButton(String message, boolean loop) {
 		startFlashFrag(true);
-		morseTranscriber.setMessage(message);	
+		morseTranscriber.setMessage(message);
+		morseTranscriber.setLoop(loop);
+		inputMessage = message;
 	}
 	/** Starts or unsets the flashing fragment based upon boolean. 
 	 * @param add <code>true</code> adds it, <code>false</code> removes it
@@ -277,7 +349,7 @@ public class MainActivity extends ActionBarActivity implements
 	}
 	/**
 	 * Sets the activity to be fullscreen, removing the action bar and status
-	 * bar.
+	 * bar. Also sets isFullscreen to the value passed.
 	 * @param fullscreen <code>true</code> to set fullscreen,
 	 * <code>false</code> to return to normal screen.
 	 */
@@ -297,8 +369,9 @@ public class MainActivity extends ActionBarActivity implements
 					WindowManager.LayoutParams.FLAG_FULLSCREEN);
 			getSupportActionBar().show();
 		}
-		//ensure the actionbar is in the correct location
+		//ensure redraw
 		findViewById(R.id.container).requestLayout();
+		isFullscreen = fullscreen;
 	}
 	/**
 	 * Prompts for the signal action (taking into account UI threading).

@@ -23,22 +23,35 @@
         <requestFocus />
     </EditText>
 
-    <CheckBox
-        android:id="@+id/com_ovrhere_morseflash_frag_main_checkbox_useCameraLight"
+    <LinearLayout
+        android:id="@+id/com_ovrhere_morseflash_frag_main_layout_checkboxContainer"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_below="@+id/com_ovrhere_morseflash_frag_main_editext_textToMorse_input"
-        android:layout_centerHorizontal="true"
-        android:text="@string/com_ovrhere_checkbox_camlight" 
-        android:enabled="false"
-        android:visibility="gone"
-        />
+        android:layout_centerHorizontal="true" >
+    
+	    <CheckBox
+	        android:id="@+id/com_ovrhere_morseflash_frag_main_checkbox_loopMessage"
+	        android:layout_width="wrap_content"
+	        android:layout_height="wrap_content"
+	        android:text="@string/com_ovrhere_checkbox_loopMessage" 
+	        android:enabled="true"
+	        />
+	    <CheckBox
+	        android:id="@+id/com_ovrhere_morseflash_frag_main_checkbox_useCameraLight"
+	        android:layout_width="wrap_content"
+	        android:layout_height="wrap_content"
+	        android:text="@string/com_ovrhere_checkbox_camNotFound" 
+	        android:enabled="false"
+	        android:visibility="gone"
+	        />
+    </LinearLayout>
 
     <Button
         android:id="@+id/com_ovrhere_morseflash_frag_main_button_send"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_below="@+id/com_ovrhere_morseflash_frag_main_checkbox_useCameraLight"
+        android:layout_below="@+id/com_ovrhere_morseflash_frag_main_layout_checkboxContainer"
         android:layout_centerHorizontal="true"
         android:layout_marginTop="12dp"
         android:text="@string/com_ovrhere_sendMessage" />
