@@ -18,10 +18,11 @@ import com.ovrhere.android.morseflash.morsecode.dictionaries.MorseDictionary.Mor
  * </p> 
  * 
  * @author Jason J.
- * @version 0.1.1-20140527
+ * @version 0.1.2-20140528
  */
 public class MorseTranscriber implements IMorseTranscriber {
 	/** The tag used for logging. */
+	@SuppressWarnings("unused")
 	final static private String LOGTAG = MorseTranscriber.class.getSimpleName();
 	
 	/* * The relative interval between each pattern unit. */
@@ -33,7 +34,7 @@ public class MorseTranscriber implements IMorseTranscriber {
 	/** The relative interval between each word. */
 	final private static int REL_INTERVAL_WORD = 7; //units
 	/** The relative interval between each message (if looped). */
-	final private static int REL_INTERVAL_MESSAGE = 20; //units
+	final private static int REL_INTERVAL_LOOP_MESSAGE = 15; //units
 	
 	/////////////////////////////////////////////////////////////////////////////////////////////////
 	/// End constants 
@@ -51,8 +52,8 @@ public class MorseTranscriber implements IMorseTranscriber {
 	private int morseCharInterval = unitTime * REL_INTERVAL_CHARACTER;
 	/** The timing between words ({@link #unitTime}* {@link #REL_INTERVAL_WORD}). */
 	private int morseWordInterval = unitTime * REL_INTERVAL_WORD;
-	/** The timing between messages ({@link #unitTime}* {@link #REL_INTERVAL_MESSAGE}). */
-	private int morseMessageInterval = unitTime * REL_INTERVAL_MESSAGE;
+	/** The timing between messages ({@link #unitTime}* {@link #REL_INTERVAL_LOOP_MESSAGE}). */
+	private int morseLoopMessageInterval = unitTime * REL_INTERVAL_LOOP_MESSAGE;
 	
 	/** The dictionary to lookup characters in. */
 	private MorseDictionary dictionary = null;
@@ -107,6 +108,10 @@ public class MorseTranscriber implements IMorseTranscriber {
 			this.messageList = msg.split("\\s+");
 		}
 	}
+	/**
+	 * If set, loops every {@value #REL_INTERVAL_LOOP_MESSAGE} units.
+	 * @param loopMessage Whether or not to loop the message and replay it infinitely. 
+	 */
 	@Override
 	public void setLoop(boolean loopMessage) {
 		this.loopMessage = loopMessage;
@@ -123,7 +128,7 @@ public class MorseTranscriber implements IMorseTranscriber {
 		morseDashInterval = unitTime * REL_INTERVAL_DASH;
 		morseCharInterval = unitTime * REL_INTERVAL_CHARACTER;		
 		morseWordInterval = unitTime * REL_INTERVAL_WORD;
-		morseMessageInterval = unitTime * REL_INTERVAL_MESSAGE;
+		morseLoopMessageInterval = unitTime * REL_INTERVAL_LOOP_MESSAGE;
 	}
 	@Override 
 	public int getUnitTime() {
@@ -339,7 +344,7 @@ public class MorseTranscriber implements IMorseTranscriber {
 				
 				if (loopMessage){
 					//keep looping if set true.
-					offsetTime(start, morseMessageInterval);					
+					offsetTime(start, morseLoopMessageInterval);					
 				} else {
 					//if not looping, no more processing.
 					continueMessageProcessing = false;					
