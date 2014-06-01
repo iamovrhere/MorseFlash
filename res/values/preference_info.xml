@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- The string used as the preference file name. -->
+    <string name="com_ovrhere_morseflash_PREFERENCE_FILE_KEY" >
+        com_ovrhere_morseflash_PREFERENCE_FILE_KEY
+    </string>
+    
+    <!-- Preference keys:
+	BE WARY OF CHANGING KEY VALUES HERE.  -->
+	<eat-comment />
+	
+    <!-- Boolean key. Defines the preference for if to loop the message playback.  -->
+    <string name="com_ovrhere_morseflash_pref_KEY_LOOP_MESSAGE" >
+        com_ovrhere_morseflash_pref_KEY_LOOP_MESSAGE
+    </string>
+    
+    <!-- Preference Values  -->
+	<eat-comment />
+	
+	<!-- Boolean. Value for com_ovrhere_morseflash_pref_KEY_LOOP_MESSAGE. -->
+    <item name="com_ovrhere_morseflash_pref_VALUE_LOOP_MESSAGE" 
+	    format="boolean|integer" type="bool" >0</item>
+</resources>
