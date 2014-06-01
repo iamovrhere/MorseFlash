@@ -1,5 +1,6 @@
 package com.ovrhere.android.morseflash.ui;
 
+import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
@@ -24,6 +25,7 @@ import com.ovrhere.android.morseflash.morsecode.transcriber.MorseTranscriber;
 import com.ovrhere.android.morseflash.morsecode.transcriber.MorseTranscriberHeadlessFragment;
 import com.ovrhere.android.morseflash.ui.fragments.ScreenFlashFragment;
 import com.ovrhere.android.morseflash.ui.fragments.ScreenFlashFragment.OnFragmentInteraction;
+import com.ovrhere.android.morseflash.ui.prefs.PreferenceUtils;
 
 /**
  * The main activity for the application. This is the primary entry point
@@ -193,13 +195,16 @@ public class MainActivity extends ActionBarActivity implements
 				CLASS_NAME + ".KEY_MESSAGE_INPUT_CONTENT";
 		final static private String KEY_LOOP_MESSAGE_CHECKBOX = 
 				CLASS_NAME + ".KEY_LOOP_MESSAGE_CHECKBOX";
-		
+				
 		/** Sends the message. */
 		private Button b_sendMessage = null;
 		/** The message input for main. */
 		private EditText et_messageInput = null;		
 		/** The checkbox determine if to loop the message. */
 		private CheckBox cb_loopMessage = null;
+		
+		/** The handle for read access preferences. */
+		private SharedPreferences prefs = null;
 		
 		public MainFragment() {}		
 		
@@ -233,6 +238,15 @@ public class MainActivity extends ActionBarActivity implements
 			cb_loopMessage = (CheckBox) 
 					rootView.findViewById(R.id.com_ovrhere_morseflash_frag_main_checkbox_loopMessage);
 			cb_loopMessage.setOnCheckedChangeListener(this);
+			
+			prefs = PreferenceUtils.getPreferences(getActivity());
+			//set checkbox according to preference
+			cb_loopMessage.setChecked(
+				prefs.getBoolean(
+						getResources().getString(
+								R.string.com_ovrhere_morseflash_pref_KEY_LOOP_MESSAGE),
+								false)
+				);
 			
 			if (getArguments() != null) {
 				Bundle args = getArguments();
@@ -273,6 +287,12 @@ public class MainActivity extends ActionBarActivity implements
 			switch	(buttonView.getId()){
 			case R.id.com_ovrhere_morseflash_frag_main_checkbox_loopMessage:
 				// TODO: set a preference here.
+				SharedPreferences.Editor editor = prefs.edit();
+				editor.putBoolean(
+						getResources().getString(
+								R.string.com_ovrhere_morseflash_pref_KEY_LOOP_MESSAGE), 
+						buttonView.isChecked());
+				editor.commit();
 				break;
 			}
 		}
