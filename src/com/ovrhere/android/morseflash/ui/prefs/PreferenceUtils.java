@@ -6,6 +6,12 @@ import android.content.Context;
 import android.content.SharedPreferences;
 import android.content.res.Resources;
 
+/**
+ * Preference Utility for handling the preferences and the preference container.
+ * Has ability to set defaults.
+ * @author Jason J.
+ * @version 0.1.0-20140530
+ */
 public class PreferenceUtils {
 	/* The class name. */
 	//final static private String CLASS_NAME = PreferenceUtils.class.getSimpleName();	
