@@ -70,7 +70,9 @@
 	        android:layout_height="wrap_content"
 	                
 	        android:text="@string/com_ovrhere_button_advanced" 
-	        	        
+	        android:button="@null"
+	        android:background="@drawable/btn_expand_toggle_button"
+	        	    
 	        android:gravity="center"
 	        android:checked="false"
 	        /> 
