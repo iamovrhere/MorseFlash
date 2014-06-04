@@ -5,6 +5,7 @@ import java.util.List;
 
 import android.hardware.Camera;
 import android.hardware.Camera.Parameters;
+import android.util.Log;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
 import android.view.View;
@@ -23,9 +24,12 @@ import android.view.View;
  * </ul> 
  * </p>
  * @author Jason J.
- * @version 0.1.0-20140602
+ * @version 0.1.1-20140604
  */
 public class CameraFlashUtil implements SurfaceHolder.Callback {
+	/** The class name. */
+	final static private String CLASS_NAME = CameraFlashUtil.class.getSimpleName();
+	
 	/** The surface holder in view. */
 	private SurfaceHolder mHolder = null;
 	/** The camera reference for turning on an off the flash. */
@@ -130,7 +134,14 @@ public class CameraFlashUtil implements SurfaceHolder.Callback {
 	private boolean _setCameraSurfaceView(SurfaceView surfaceView){
 		mHolder = surfaceView.getHolder();
 		mHolder.addCallback(this);
-		mCamera = Camera.open();
+		try {
+			mCamera = Camera.open();
+		} catch (RuntimeException e){
+			//may fail to connect to service, e.g. simulator
+			Log.w(CLASS_NAME, "Run time error: " + e);
+			return false;
+		}
+		Log.i(CLASS_NAME, "Continginue?");
 		if (mCamera != null){
 			return _setCameraPreview();
 		} 
@@ -143,6 +154,7 @@ public class CameraFlashUtil implements SurfaceHolder.Callback {
 	 * <code>false</code> if a problem occurs.
 	 */
 	private boolean _setCameraPreview() {
+		if (mCamera == null) return false;
 		try {
 			mCamera.setPreviewDisplay(mHolder);
 		} catch (IOException e) {
@@ -167,9 +179,10 @@ public class CameraFlashUtil implements SurfaceHolder.Callback {
 
 	@Override
 	public void surfaceDestroyed(SurfaceHolder holder) {
-	    mCamera.stopPreview();
-	    mCamera.release(); 
-	    //release camera fully
+	    if (mCamera != null){
+	    	mCamera.stopPreview();
+	    	mCamera.release(); 
+	    } //release camera fully
 	    mHolder = null;
 	}
 	
