@@ -10,9 +10,18 @@ import android.view.SurfaceView;
 import android.view.View;
 
 /**
- * A camera flash utility class, designed to work with 
- * problematic devices.
- * 
+ * <p>A camera flash utility class, designed to work with 
+ * problematic devices. Requires there be a "visible" SurfaceView for the camera.
+ * </p>
+ * <p>
+ * In order to work on as many devices as possible, the SurfaceView in question
+ * MUST:
+ * <ul>
+ * <li>Have {@link View#VISIBLE}</li>
+ * <li>Have a height x width > 0dp</li>
+ * <li>Be within visible frame</li>
+ * </ul> 
+ * </p>
  * @author Jason J.
  * @version 0.1.0-20140602
  */

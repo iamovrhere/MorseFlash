@@ -18,6 +18,7 @@ import android.widget.CheckBox;
 import android.widget.CompoundButton;
 import android.widget.CompoundButton.OnCheckedChangeListener;
 import android.widget.EditText;
+import android.widget.ScrollView;
 
 import com.ovrhere.android.morseflash.R;
 import com.ovrhere.android.morseflash.morsecode.dictionaries.InternationalMorseCode;
@@ -181,7 +182,8 @@ public class MainActivity extends ActionBarActivity implements
 	 * The fragment for main. Activity must implement
 	 * {@link OnFragmentInteraction}.
 	 * 
-	 *  @version 0.1.0-20140529
+	 *  @version 0.2.0-20140603
+	 *  @author Jason J.
 	 */
 	public static class MainFragment extends Fragment 
 		implements OnClickListener, OnCheckedChangeListener {
@@ -190,18 +192,29 @@ public class MainActivity extends ActionBarActivity implements
 		/** The tag used in fragments. */
 		final static public String TAG = MainFragment.class.getName();
 		
-		/** Bundle: The message input content.String. */
+		/** Bundle key: The message input content.String. */
 		final static private String KEY_MESSAGE_INPUT_CONTENT = 
-				CLASS_NAME + ".KEY_MESSAGE_INPUT_CONTENT";
-		final static private String KEY_LOOP_MESSAGE_CHECKBOX = 
-				CLASS_NAME + ".KEY_LOOP_MESSAGE_CHECKBOX";
-				
+				CLASS_NAME + ".KEY_MESSAGE_INPUT_CONTENT";		
+		/** Bundle key: The checkbox/toggle to show advanced settings. */ 
+		final static private String KEY_SHOW_ADVANCED_TOGGLE = 
+				CLASS_NAME + ".KEY_SHOW_ADVANCED_TOGGLE";
+		/////////////////////////////////////////////////////////////////////////////////////////////////
+		/// end constants
+		////////////////////////////////////////////////////////////////////////////////////////////////
+		
 		/** Sends the message. */
 		private Button b_sendMessage = null;
 		/** The message input for main. */
 		private EditText et_messageInput = null;		
 		/** The checkbox determine if to loop the message. */
-		private CheckBox cb_loopMessage = null;
+		private CompoundButton cb_loopMessage = null;
+		/** The CompoundButton/toggle button to show and hide advanced options. */
+		private CompoundButton cb_advancedSettings = null;
+		
+		/** Container view holding advanced options. Used to toggle visibility. */
+		private View v_advancedOptionsContainer = null;
+		/** The root container of the fragment. */
+		private ScrollView sv_scrollContainer = null;
 		
 		/** The handle for read access preferences. */
 		private SharedPreferences prefs = null;
@@ -222,7 +235,7 @@ public class MainActivity extends ActionBarActivity implements
 		public void onSaveInstanceState(Bundle outState) {
 			super.onSaveInstanceState(outState);
 			outState.putString(KEY_MESSAGE_INPUT_CONTENT, et_messageInput.getText().toString());
-			outState.putBoolean(KEY_LOOP_MESSAGE_CHECKBOX, cb_loopMessage.isChecked());
+			outState.putBoolean(KEY_SHOW_ADVANCED_TOGGLE, cb_advancedSettings.isChecked());
 		}
 	
 		@Override
@@ -230,6 +243,9 @@ public class MainActivity extends ActionBarActivity implements
 				Bundle savedInstanceState) {
 			View rootView = inflater.inflate(R.layout.fragment_main, container,
 					false);
+			sv_scrollContainer = (ScrollView) 
+					rootView.findViewById(R.id.com_ovrhere_morseflash_frag_main_scrollContainer);	
+			
 			et_messageInput = (EditText) 
 					rootView.findViewById(R.id.com_ovrhere_morseflash_frag_main_editext_textToMorse_input);
 			b_sendMessage = (Button) 
@@ -247,6 +263,12 @@ public class MainActivity extends ActionBarActivity implements
 								R.string.com_ovrhere_morseflash_pref_KEY_LOOP_MESSAGE),
 								false)
 				);
+			cb_advancedSettings = (CompoundButton) 
+					rootView.findViewById(R.id.com_ovrhere_morseflash_frag_main_toggle_advanced);
+			cb_advancedSettings.setOnCheckedChangeListener(this);
+			
+			v_advancedOptionsContainer = 
+					rootView.findViewById(R.id.com_ovrhere_morseflash_frag_main_layout_checkboxContainer);
 			
 			if (getArguments() != null) {
 				Bundle args = getArguments();
@@ -258,12 +280,36 @@ public class MainActivity extends ActionBarActivity implements
 				et_messageInput.setText(
 							savedInstanceState.getString(KEY_MESSAGE_INPUT_CONTENT)
 						);
-				cb_loopMessage.setChecked(
-							savedInstanceState.getBoolean(KEY_LOOP_MESSAGE_CHECKBOX)
+				cb_advancedSettings.setChecked(
+							savedInstanceState.getBoolean(KEY_SHOW_ADVANCED_TOGGLE)
 						);
 			}
 			return rootView;
 		}
+		
+		/////////////////////////////////////////////////////////////////////////////////////////////////
+		/// Helper methods
+		////////////////////////////////////////////////////////////////////////////////////////////////
+		/** Toggles visbility of advanced settings container based on bool passed.
+		 * @param show <code>true</code> to show container, 
+		 * <code>false</code> to hide.
+		 */
+		private void showAdvancedSettings(boolean show){
+			if (v_advancedOptionsContainer == null) return;
+			//TODO: return to same scrollview to original height.
+			
+			if (show){
+				v_advancedOptionsContainer.setVisibility(View.VISIBLE);
+			} else {
+				v_advancedOptionsContainer.setVisibility(View.GONE);
+			}
+			
+		}
+		
+		
+		/////////////////////////////////////////////////////////////////////////////////////////////////
+		/// Listeners
+		////////////////////////////////////////////////////////////////////////////////////////////////
 		
 		@Override
 		public void onClick(View v) {
@@ -284,9 +330,10 @@ public class MainActivity extends ActionBarActivity implements
 		@Override
 		public void onCheckedChanged(CompoundButton buttonView,
 				boolean isChecked) {
+			//is called on every change, even programatically.
+			
 			switch	(buttonView.getId()){
 			case R.id.com_ovrhere_morseflash_frag_main_checkbox_loopMessage:
-				// TODO: set a preference here.
 				SharedPreferences.Editor editor = prefs.edit();
 				editor.putBoolean(
 						getResources().getString(
@@ -294,6 +341,9 @@ public class MainActivity extends ActionBarActivity implements
 						buttonView.isChecked());
 				editor.commit();
 				break;
+			case R.id.com_ovrhere_morseflash_frag_main_toggle_advanced:
+				showAdvancedSettings(buttonView.isChecked());
+				break;				
 			}
 		}
 		
