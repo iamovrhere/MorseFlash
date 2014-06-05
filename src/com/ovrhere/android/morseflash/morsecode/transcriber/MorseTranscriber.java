@@ -18,7 +18,7 @@ import com.ovrhere.android.morseflash.morsecode.dictionaries.MorseDictionary.Mor
  * </p> 
  * 
  * @author Jason J.
- * @version 0.1.2-20140528
+ * @version 0.1.3-20140605
  */
 public class MorseTranscriber implements IMorseTranscriber {
 	/** The tag used for logging. */
@@ -157,10 +157,11 @@ public class MorseTranscriber implements IMorseTranscriber {
 	}
 	
 	@Override
-	public boolean cancel(){		
+	public boolean cancel(){
+		boolean isCancelSuccess = false;
 		if (continueMessageProcessing){
 			continueMessageProcessing = false;			
-			return true;
+			isCancelSuccess = true;
 		}	
 		if (messageIsSending){
 			messageIsSending = false;
@@ -169,9 +170,9 @@ public class MorseTranscriber implements IMorseTranscriber {
 				signalTimer.purge();
 				signalTimer = new Timer();
 			}
-			return true;
+			isCancelSuccess = true;
 		}
-		return false;
+		return isCancelSuccess;
 	}
 		
 	
