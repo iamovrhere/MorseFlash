@@ -6,18 +6,18 @@
     <string name="hello_world">Hello world!</string>
     <!-- Settings. -->
     <string name="action_settings">Settings</string>
-    <!-- Sends the message.  -->
+    <!-- Send message.  -->
     <string name="com_ovrhere_sendMessage">Send</string>
     <!-- Cancel string. -->
     <string name="com_ovrhere_button_cancel">Cancel</string>
     <!-- Advanced button -->
     <string name="com_ovrhere_button_advanced">Advanced</string>
     
-    <!-- Use light if possible. -->
+    <!-- Use Camera light (experi). -->
     <string name="com_ovrhere_checkbox_camlight">Use Camera Flash (Experimental)
         </string>
-    <!-- The message to give if  is not found. -->
-    <string name="com_ovrhere_checkbox_camFlashNotFound">Flash Not Found</string>
+    <!-- Use camera (not found) -->
+    <string name="com_ovrhere_checkbox_camFlashNotFound">Use Camera Flash (Not Found)</string>
     <!-- Loop the message. -->
     <string name="com_ovrhere_checkbox_loopMessage">Loop message</string>
     
