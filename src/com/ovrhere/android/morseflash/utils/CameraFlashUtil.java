@@ -12,7 +12,10 @@ import android.view.View;
 
 /**
  * <p>A camera flash utility class, designed to work with 
- * problematic devices. Requires there be a "visible" SurfaceView for the camera.
+ * problematic devices. Requires there be a "visible" SurfaceView for the camera. 
+ * It is suggested that one call {@link #close()} when the activity suspends to 
+ * free the camera service. To start using the utility again, 
+ * reset it by calling {@link #setCameraSurfaceView(SurfaceView)}.
  * </p>
  * <p>
  * In order to work on as many devices as possible, the SurfaceView in question
@@ -23,10 +26,20 @@ import android.view.View;
  * <li>Be within visible frame</li>
  * </ul> 
  * </p>
+ * <p>
+ * Requires the following permissions in the manifest:
+ * <code>
+ * <br/>&lt;uses-permission android:name="android.permission.CAMERA" /&gt;
+ * <br/>&lt;uses-permission android:name="android.permission.FLASHLIGHT"/&gt;
+ * <br/>&lt;uses-feature android:name="android.hardware.camera" /&gt;
+ * <br/>&lt;uses-feature android:name="android.hardware.camera.flash" /&gt;
+ *</code>
+ * </p>
  * @author Jason J.
- * @version 0.1.1-20140604
+ * @version 0.2.0-20140605
  */
 public class CameraFlashUtil implements SurfaceHolder.Callback {
+	//TODO: futher reading on this topic http://stackoverflow.com/questions/5503480/use-camera-flashlight-in-android
 	/** The class name. */
 	final static private String CLASS_NAME = CameraFlashUtil.class.getSimpleName();
 	
@@ -97,7 +110,8 @@ public class CameraFlashUtil implements SurfaceHolder.Callback {
 	 * @param on If set to <code>true</code>, turns on LED. If <code>false</code>
 	 * turns off LED.
 	 * @throws IllegalStateException If the camera is not set, either by not being
-	 * available or the object not being initialized.
+	 * available or the object not being initialized (such as after 
+	 * calling {@link #close()}).
 	 */
 	public void flashLed(boolean on) throws IllegalStateException {
 		//if not available, quit.
@@ -116,6 +130,18 @@ public class CameraFlashUtil implements SurfaceHolder.Callback {
 			mCamera.setParameters(params);
 			mCamera.stopPreview();
 			mCamera.release();
+		}
+	}
+	/** Closes the utility safely and releases any lingering camera references.
+	 * To reopen, call {@link #setCameraSurfaceView(SurfaceView)}. 
+	 */
+	public void close(){
+		//avoids camera service hogging.
+		mHolder = null;
+		if (mCamera != null){
+			mCamera.stopPreview();
+			mCamera.release();
+			mCamera = null;
 		}
 	}
 	
@@ -141,7 +167,7 @@ public class CameraFlashUtil implements SurfaceHolder.Callback {
 			Log.w(CLASS_NAME, "Run time error: " + e);
 			return false;
 		}
-		Log.i(CLASS_NAME, "Continginue?");
+		
 		if (mCamera != null){
 			return _setCameraPreview();
 		} 
