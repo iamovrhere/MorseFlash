@@ -36,7 +36,7 @@ import android.view.View;
  *</code>
  * </p>
  * @author Jason J.
- * @version 0.2.0-20140605
+ * @version 0.2.1-20140605
  */
 public class CameraFlashUtil implements SurfaceHolder.Callback {
 	//TODO: futher reading on this topic http://stackoverflow.com/questions/5503480/use-camera-flashlight-in-android
@@ -136,18 +136,26 @@ public class CameraFlashUtil implements SurfaceHolder.Callback {
 	 * To reopen, call {@link #setCameraSurfaceView(SurfaceView)}. 
 	 */
 	public void close(){
+		_close();
+	}
+	
+	
+	/////////////////////////////////////////////////////////////////////////////////////////////////
+	/// Helper methods
+	////////////////////////////////////////////////////////////////////////////////////////////////
+	/** Closes and releases camera service. */
+	private void _close() {
 		//avoids camera service hogging.
-		mHolder = null;
+		if (mHolder != null){
+			mHolder.removeCallback(this);
+			mHolder = null;
+		}
 		if (mCamera != null){
 			mCamera.stopPreview();
 			mCamera.release();
 			mCamera = null;
 		}
 	}
-	
-	/////////////////////////////////////////////////////////////////////////////////////////////////
-	/// Helper methods
-	////////////////////////////////////////////////////////////////////////////////////////////////
 	
 	/**
 	 * Attempts to initialize the surfaceView holder and camera for use with 
@@ -205,11 +213,7 @@ public class CameraFlashUtil implements SurfaceHolder.Callback {
 
 	@Override
 	public void surfaceDestroyed(SurfaceHolder holder) {
-	    if (mCamera != null){
-	    	mCamera.stopPreview();
-	    	mCamera.release(); 
-	    } //release camera fully
-	    mHolder = null;
+		_close();
 	}
 	
 	
