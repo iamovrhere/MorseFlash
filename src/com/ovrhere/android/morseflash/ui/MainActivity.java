@@ -1,5 +1,6 @@
 package com.ovrhere.android.morseflash.ui;
 
+import android.app.Activity;
 import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
@@ -9,6 +10,7 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.view.SurfaceView;
 import android.view.View;
 import android.view.View.OnClickListener;
 import android.view.ViewGroup;
@@ -27,12 +29,13 @@ import com.ovrhere.android.morseflash.morsecode.transcriber.MorseTranscriberHead
 import com.ovrhere.android.morseflash.ui.fragments.ScreenFlashFragment;
 import com.ovrhere.android.morseflash.ui.fragments.ScreenFlashFragment.OnFragmentInteraction;
 import com.ovrhere.android.morseflash.ui.prefs.PreferenceUtils;
+import com.ovrhere.android.morseflash.utils.CameraFlashUtil;
 
 /**
  * The main activity for the application. This is the primary entry point
  * of the app.
  * @author Jason J.
- * @version 0.2.0-20140528
+ * @version 0.3.0-20140605
  */
 public class MainActivity extends ActionBarActivity implements 
 	ScreenFlashFragment.OnFragmentInteraction,
@@ -62,6 +65,11 @@ public class MainActivity extends ActionBarActivity implements
 	
 	/** The reference to the flasher, if attached. */
 	private ScreenFlashFragment flashFrag = null;
+	/** The reference to the main fragment, if attached. */
+	private MainFragment mainFrag = null;
+	/** The reference to the camera flash util to flash light. 
+	 * Should be destroyed in onPause. */
+	private CameraFlashUtil maincameraFlashUtil = null;
 	
 	/** The current fragment tag. Top level is {@link MainFragment#TAG}. 
 	 * Default empty string.*/
@@ -70,6 +78,8 @@ public class MainActivity extends ActionBarActivity implements
 	private boolean isFullscreen = false;
 	/** The input message for the main fragment. */
 	private String inputMessage = "";
+	/** If the message is being sent by flash light. */
+	private boolean isMessageByFlashLight = false;
 	
 	/////////////////////////////////////////////////////////////////////////////////////////////////
 	/// End members
@@ -151,6 +161,11 @@ public class MainActivity extends ActionBarActivity implements
 	/// End creation
 	////////////////////////////////////////////////////////////////////////////////////////////////
 	
+	@Override
+	protected void onPause() {
+		super.onPause();
+		maincameraFlashUtil.close();
+	}	
 	
 	@Override
 	public void onAttachFragment(Fragment fragment) {
@@ -158,6 +173,8 @@ public class MainActivity extends ActionBarActivity implements
 		if (fragment instanceof ScreenFlashFragment){
 			flashFrag = (ScreenFlashFragment) fragment;
 			flashFrag.flashBackground(false);
+		} else if (fragment instanceof MainFragment){
+			mainFrag = ((MainFragment) fragment);
 		}
 	}
 	
@@ -182,7 +199,7 @@ public class MainActivity extends ActionBarActivity implements
 	 * The fragment for main. Activity must implement
 	 * {@link OnFragmentInteraction}.
 	 * 
-	 *  @version 0.2.0-20140603
+	 *  @version 0.2.1-20140605
 	 *  @author Jason J.
 	 */
 	public static class MainFragment extends Fragment 
@@ -194,22 +211,34 @@ public class MainActivity extends ActionBarActivity implements
 		
 		/** Bundle key: The message input content.String. */
 		final static private String KEY_MESSAGE_INPUT_CONTENT = 
-				CLASS_NAME + ".KEY_MESSAGE_INPUT_CONTENT";		
-		/** Bundle key: The checkbox/toggle to show advanced settings. */ 
+				CLASS_NAME + ".KEY_MESSAGE_INPUT_CONTENT";
+		/** Bundle key: The bool to determine if we are currently sending a message. 
+		 * Boolean. */
+		final static private String KEY_SENDING_MESSAGE_CURRENTLY = 
+				CLASS_NAME + ".KEY_SENDING_MESSAGE_CURRENTLY";
+		/** Bundle key: The checkbox/toggle to show advanced settings. Boolean. */ 
 		final static private String KEY_SHOW_ADVANCED_TOGGLE = 
 				CLASS_NAME + ".KEY_SHOW_ADVANCED_TOGGLE";
 		/////////////////////////////////////////////////////////////////////////////////////////////////
 		/// end constants
 		////////////////////////////////////////////////////////////////////////////////////////////////
+		/** The camera flash util for checking and flashing the camera light. */
+		private CameraFlashUtil cameraFlashUtil = null;
+		/** Whether or not the send message button {@link #b_sendMessage} is
+		 * Cancel or not. default is false.		 */
+		private boolean isSendingMessage = false;
 		
 		/** Sends the message. */
 		private Button b_sendMessage = null;
 		/** The message input for main. */
 		private EditText et_messageInput = null;		
-		/** The checkbox determine if to loop the message. */
-		private CompoundButton cb_loopMessage = null;
+		/** The checkbox to determine if to loop the message. */
+		private CheckBox cb_loopMessage = null;
 		/** The CompoundButton/toggle button to show and hide advanced options. */
 		private CompoundButton cb_advancedSettings = null;
+		/** The checkbox to determine whether to use the camera flash or not. */
+		private CheckBox cb_useCamFlash  = null; 
+		
 		
 		/** Container view holding advanced options. Used to toggle visibility. */
 		private View v_advancedOptionsContainer = null;
@@ -221,10 +250,12 @@ public class MainActivity extends ActionBarActivity implements
 		
 		public MainFragment() {}		
 		
-		static public MainFragment newInstance(String startingMessage){
+		static public MainFragment newInstance(String startingMessage, 
+				boolean isSendingMessage){
 			MainFragment fragment = new MainFragment();
 			Bundle args = new Bundle();
 			args.putString(KEY_MESSAGE_INPUT_CONTENT, startingMessage);
+			args.putBoolean(KEY_SENDING_MESSAGE_CURRENTLY, isSendingMessage);
 			
 			fragment.setArguments(args);
 			return fragment;
@@ -243,38 +274,16 @@ public class MainActivity extends ActionBarActivity implements
 				Bundle savedInstanceState) {
 			View rootView = inflater.inflate(R.layout.fragment_main, container,
 					false);
-			sv_scrollContainer = (ScrollView) 
-					rootView.findViewById(R.id.com_ovrhere_morseflash_frag_main_scrollContainer);	
+			initViews(rootView);
 			
-			et_messageInput = (EditText) 
-					rootView.findViewById(R.id.com_ovrhere_morseflash_frag_main_editext_textToMorse_input);
-			b_sendMessage = (Button) 
-					rootView.findViewById(R.id.com_ovrhere_morseflash_frag_main_button_send);
-			b_sendMessage.setOnClickListener(this);
-			cb_loopMessage = (CheckBox) 
-					rootView.findViewById(R.id.com_ovrhere_morseflash_frag_main_checkbox_loopMessage);
-			cb_loopMessage.setOnCheckedChangeListener(this);
-			
-			prefs = PreferenceUtils.getPreferences(getActivity());
-			//set checkbox according to preference
-			cb_loopMessage.setChecked(
-				prefs.getBoolean(
-						getResources().getString(
-								R.string.com_ovrhere_morseflash_pref_KEY_LOOP_MESSAGE),
-								false)
-				);
-			cb_advancedSettings = (CompoundButton) 
-					rootView.findViewById(R.id.com_ovrhere_morseflash_frag_main_toggle_advanced);
-			cb_advancedSettings.setOnCheckedChangeListener(this);
-			
-			v_advancedOptionsContainer = 
-					rootView.findViewById(R.id.com_ovrhere_morseflash_frag_main_layout_checkboxContainer);
-			
+			//Assumes all views are initialised by tFragmenthis point.
 			if (getArguments() != null) {
 				Bundle args = getArguments();
 				et_messageInput.setText(
 						args.getString(KEY_MESSAGE_INPUT_CONTENT)
 						);
+				isSendingMessage = 
+						args.getBoolean(KEY_SENDING_MESSAGE_CURRENTLY);
 			}
 			if (savedInstanceState != null){
 				et_messageInput.setText(
@@ -287,6 +296,102 @@ public class MainActivity extends ActionBarActivity implements
 			return rootView;
 		}
 		
+		@Override
+		public void onDestroyView() {
+			super.onDestroyView();
+			//proper clean up.
+			cameraFlashUtil.close();
+			cameraFlashUtil = null;
+		}
+		
+		/** Gets the current valid util object. Be sure to call close()
+		 *  before destroying it.		 */
+		public CameraFlashUtil getCameraFlashUtil() {
+			return cameraFlashUtil;
+		}
+		/** Informs the fragment if sending has completed. */
+		public void setMessageComplete(boolean complete){
+			setSendingMessage(!complete);
+		}
+
+		/////////////////////////////////////////////////////////////////////////////////////////////////
+		/// Initialiser helper functions 
+		////////////////////////////////////////////////////////////////////////////////////////////////
+		/** Initialises the views, helps keep code tidy. 
+		 * @param rootView The fragment root view being created.  
+		 */
+		private void initViews(View rootView) {
+			sv_scrollContainer = (ScrollView) 
+					rootView.findViewById(R.id.com_ovrhere_morseflash_frag_main_scrollContainer);	
+			
+			et_messageInput = (EditText) 
+					rootView.findViewById(R.id.com_ovrhere_morseflash_frag_main_editext_textToMorse_input);
+			b_sendMessage = (Button) 
+					rootView.findViewById(R.id.com_ovrhere_morseflash_frag_main_button_send);
+			b_sendMessage.setOnClickListener(this);
+			
+			prefs = PreferenceUtils.getPreferences(getActivity());
+			
+			initLoopCheckbox(rootView, prefs);
+			initAdvancedContainerToggle(rootView);
+			
+			cameraFlashUtil = new CameraFlashUtil(
+					(SurfaceView) 
+						rootView.findViewById(R.id.com_ovrhere_morseflash_frag_main_surfaceview)
+					);
+			
+			((MainActivity)getActivity())._onUpdateCameraFlashUtil(cameraFlashUtil);
+			initCameraFlashCheckbox(rootView, cameraFlashUtil);
+		}
+
+		/** Initialises the loop message checkbox. 
+		 * Assumes {@link #prefs} has been initialised. */
+		private void initLoopCheckbox(View rootView, SharedPreferences prefs) {
+			cb_loopMessage = (CheckBox) 
+					rootView.findViewById(R.id.com_ovrhere_morseflash_frag_main_checkbox_loopMessage);
+			cb_loopMessage.setOnCheckedChangeListener(this);
+			//set checkbox according to preference
+			cb_loopMessage.setChecked(
+				prefs.getBoolean(
+						getResources().getString(
+								R.string.com_ovrhere_morseflash_pref_KEY_LOOP_MESSAGE),
+								false)
+				);
+		}
+
+		/** Initalises the advanced container and the toggle
+		 * responsible for displaying/hiding it. */
+		private void initAdvancedContainerToggle(View rootView) {
+			cb_advancedSettings = (CompoundButton) 
+					rootView.findViewById(R.id.com_ovrhere_morseflash_frag_main_toggle_advanced);
+			cb_advancedSettings.setOnCheckedChangeListener(this);
+			
+			v_advancedOptionsContainer = 
+					rootView.findViewById(R.id.com_ovrhere_morseflash_frag_main_layout_checkboxContainer);
+		}
+		
+		/** Initialises the camera flash checkbox according to the 
+		 * availability of the camera flash. */
+		private void initCameraFlashCheckbox(View rootView, 
+				CameraFlashUtil cameraFlashUtil) {
+			cb_useCamFlash = (CheckBox)
+					rootView.findViewById(R.id.com_ovrhere_morseflash_frag_main_checkbox_useCameraLight);
+			cb_useCamFlash.setOnCheckedChangeListener(this);			
+			
+			if (cameraFlashUtil.isFlashAvailable()){
+				cb_useCamFlash.setEnabled(true);
+				cb_useCamFlash.setText(
+						getResources().getString(R.string.com_ovrhere_checkbox_camlight)
+						);
+			} else {
+				cb_useCamFlash.setText(
+						getResources().getString(R.string.com_ovrhere_checkbox_camFlashNotFound)
+						);
+				cb_useCamFlash.setEnabled(false);
+				cb_useCamFlash.setChecked(false); 
+			}
+		}
+		
 		/////////////////////////////////////////////////////////////////////////////////////////////////
 		/// Helper methods
 		////////////////////////////////////////////////////////////////////////////////////////////////
@@ -296,8 +401,7 @@ public class MainActivity extends ActionBarActivity implements
 		 */
 		private void showAdvancedSettings(boolean show){
 			if (v_advancedOptionsContainer == null) return;
-			//TODO: return to same scrollview to original height.
-			
+			//TODO: return to same scrollview to original height.			
 			if (show){
 				v_advancedOptionsContainer.setVisibility(View.VISIBLE);
 			} else {
@@ -305,7 +409,25 @@ public class MainActivity extends ActionBarActivity implements
 			}
 			
 		}
-		
+		/**
+		 * Sets the #isSendingMessage bool. Additionally, 
+		 * it:
+		 * <ul><li> toggles send button's action and string to be send/cancel.
+		 * Send if not sending currently, cancel if sending.</li>
+		 * <li>disables the text field when sending, enables when inactive. </li>
+		 * <ul>
+		 * @param sending <code>true</code> if currently sending, 
+		 * <code>false</code> if not.
+		 */
+		private void setSendingMessage(boolean sending){
+			int stringId = sending 	? R.string.com_ovrhere_button_cancel 
+									: R.string.com_ovrhere_sendMessage;
+			b_sendMessage.setText(getResources().getString(stringId));
+			
+			b_sendMessage.postInvalidate(); //redraw
+			et_messageInput.setEnabled(!sending);
+			isSendingMessage = sending;
+		}
 		
 		/////////////////////////////////////////////////////////////////////////////////////////////////
 		/// Listeners
@@ -315,13 +437,25 @@ public class MainActivity extends ActionBarActivity implements
 		public void onClick(View v) {
 			switch (v.getId()){
 			case R.id.com_ovrhere_morseflash_frag_main_button_send:
-				//prevent double taps
-				b_sendMessage.setEnabled(false);
-				//send message
-				((MainActivity) getActivity())._onSendButton(
+				MainActivity a = ((MainActivity) getActivity());
+				if (isSendingMessage){
+					a._onCancelButton();
+					setSendingMessage(false);
+				} else {
+					//prevent double taps
+					b_sendMessage.setEnabled(false);
+					if (cb_useCamFlash.isChecked()){						
+						//re-enable.
+						b_sendMessage.setEnabled(true);
+						setSendingMessage(true);
+					}
+					//send message. can be abstract _onSendButton if necessary.
+					a._onSendButton(
 							et_messageInput.getText().toString(),
-							cb_loopMessage.isChecked()
+							cb_loopMessage.isChecked(),
+							cb_useCamFlash.isChecked()
 						);
+				}
 				
 				break;
 			}			
@@ -330,7 +464,7 @@ public class MainActivity extends ActionBarActivity implements
 		@Override
 		public void onCheckedChanged(CompoundButton buttonView,
 				boolean isChecked) {
-			//is called on every change, even programatically.
+			//is called on every change, even programmatically.
 			
 			switch	(buttonView.getId()){
 			case R.id.com_ovrhere_morseflash_frag_main_checkbox_loopMessage:
@@ -365,7 +499,7 @@ public class MainActivity extends ActionBarActivity implements
 	/** Switches the fragment back to the default. */
 	private void setFragToDefault(){
 		setFragmentAsContent(
-				MainFragment.newInstance(inputMessage),
+				MainFragment.newInstance(inputMessage, false),
 				MainFragment.class.getName()
 				);
 	}
@@ -388,16 +522,47 @@ public class MainActivity extends ActionBarActivity implements
 		currentFragmentTag = tag;
 	}
 	
+	/** Updates the camera flash util as soon as the fragment recreates it
+	 * @param cameraFlashUtil
+	 */
+	private void _onUpdateCameraFlashUtil(CameraFlashUtil cameraFlashUtil){
+		maincameraFlashUtil = cameraFlashUtil;
+	}
+	
+	/** The action to take when the fragment has cancelled. */
+	private void _onCancelButton(){
+		isMessageByFlashLight = false;
+		try {
+			if (maincameraFlashUtil != null){
+				maincameraFlashUtil.flashLed(false); 
+			}
+		} catch (IllegalStateException e){}
+		endMessage();
+	}
+		
 	/** The action to perform when the send button is sent. 
 	 * @param message The raw message to pass on.
-	 * @param loop Whether or not to loop the message. 
+	 * @param loop Whether or not to loop the message.
+	 * @param useFlashlight <code>true</code> to use the camera light, 
+	 * <code>false</code> to use screen. 
 	 */
-	private void _onSendButton(String message, boolean loop) {
-		startFlashFrag(true);
+	private void _onSendButton(String message, boolean loop, 
+			boolean useFlashlight) {
+		isMessageByFlashLight = useFlashlight;
+		
 		morseTranscriber.setMessage(message);
 		morseTranscriber.setLoop(loop);
 		inputMessage = message;
+		
+		if (!useFlashlight){
+			startFlashFrag(true);
+		} else {
+			morseTranscriber.start();
+		}
 	}
+	
+	
+	
 	/** Starts or unsets the flashing fragment based upon boolean. 
 	 * @param add <code>true</code> adds it, <code>false</code> removes it
 	 * and resets to default.
@@ -449,7 +614,14 @@ public class MainActivity extends ActionBarActivity implements
 	 * for off state.
 	 */
 	private void signalAction(final boolean state){
-		if (flashFrag != null){
+		if (isMessageByFlashLight){
+			try {
+				if (maincameraFlashUtil != null){
+					maincameraFlashUtil.flashLed(false);
+				}
+			} catch (IllegalStateException e){}
+			
+		} else if (flashFrag != null){
 			MainActivity.this.runOnUiThread(new Runnable(){
 			    public void run(){
 			    	flashFrag.flashBackground(state);
@@ -460,10 +632,20 @@ public class MainActivity extends ActionBarActivity implements
 	/** Ends the message and returns to starting state. */
 	private void endMessage(){
 		morseTranscriber.cancel();
-		MainActivity.this.runOnUiThread(new Runnable(){
-		    public void run(){
-		    	startFlashFrag(false);
-	    }});
+		if (!isMessageByFlashLight){
+			MainActivity.this.runOnUiThread(new Runnable(){
+			    public void run(){
+			    	startFlashFrag(false);
+		    }});
+		} else {
+			if (mainFrag != null){
+				MainActivity.this.runOnUiThread(new Runnable(){
+				    public void run(){
+				    	mainFrag.setMessageComplete(true);
+				    }
+			    });
+			}
+		}
 	}
 	
 	/////////////////////////////////////////////////////////////////////////////////////////////////
