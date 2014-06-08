@@ -10,7 +10,7 @@ import android.content.res.Resources;
  * Preference Utility for handling the preferences and the preference container.
  * Has ability to set defaults.
  * @author Jason J.
- * @version 0.1.0-20140530
+ * @version 0.2.0-20140606
  */
 public class PreferenceUtils {
 	/* The class name. */
@@ -62,12 +62,17 @@ public class PreferenceUtils {
 	 * res/values/preferences_info.xml
 	 * @param prefEdit The {@link SharedPreferences} editor to use to commit. */
 	static private void _setDefaults(Resources r, SharedPreferences.Editor prefEdit){
+		//Thought: Consider using parallel arrays in res to respect open-close?
 		
 		prefEdit.putBoolean(
 				r.getString(R.string.com_ovrhere_morseflash_pref_KEY_LOOP_MESSAGE),
 				r.getBoolean(R.bool.com_ovrhere_morseflash_pref_VALUE_LOOP_MESSAGE)
 				);
+		prefEdit.putBoolean(
+				r.getString(R.string.com_ovrhere_morseflash_pref_KEY_USE_CAMERA_FLASH),
+				r.getBoolean(R.bool.com_ovrhere_morseflash_pref_VALUE_USE_CAMERA_FLASH)
+				);
 		//first run has completed.
 		prefEdit.putBoolean(KEY_PREFERENCES_SET, VALUE_PREFERENCES_SET);
-	}
+	}		
 }

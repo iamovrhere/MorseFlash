@@ -1,5 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <!-- Version 0.2.0  -->
+    <eat-comment />
     <!-- The string used as the preference file name. -->
     <string name="com_ovrhere_morseflash_PREFERENCE_FILE_KEY" >
         com_ovrhere_morseflash_PREFERENCE_FILE_KEY
@@ -13,11 +15,19 @@
     <string name="com_ovrhere_morseflash_pref_KEY_LOOP_MESSAGE" >
         com_ovrhere_morseflash_pref_KEY_LOOP_MESSAGE
     </string>
+    <!-- Boolean key. Defines the preference for using the camera flash.  -->
+    <string name="com_ovrhere_morseflash_pref_KEY_USE_CAMERA_FLASH" >
+        com_ovrhere_morseflash_pref_KEY_USE_CAMERA_FLASH
+    </string>
     
-    <!-- Preference Values  -->
+    <!-- Preference Default Values  -->
 	<eat-comment />
 	
 	<!-- Boolean. Value for com_ovrhere_morseflash_pref_KEY_LOOP_MESSAGE. -->
     <item name="com_ovrhere_morseflash_pref_VALUE_LOOP_MESSAGE" 
+	    format="boolean|integer" type="bool" >0</item>
+    <!-- Boolean. Value for com_ovrhere_morseflash_pref_KEY_USE_CAMERA_FLASH. 
+    Note: depends if the camera flash is accessible or not. -->
+    <item name="com_ovrhere_morseflash_pref_VALUE_USE_CAMERA_FLASH" 
 	    format="boolean|integer" type="bool" >0</item>
 </resources>
