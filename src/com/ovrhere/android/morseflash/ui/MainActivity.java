@@ -1,5 +1,6 @@
 package com.ovrhere.android.morseflash.ui;
 
+import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
@@ -7,6 +8,7 @@ import android.support.v7.app.ActionBarActivity;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.view.Window;
 import android.view.WindowManager;
 
 import com.ovrhere.android.morseflash.R;
@@ -15,13 +17,14 @@ import com.ovrhere.android.morseflash.morsecode.transcriber.MorseTranscriber;
 import com.ovrhere.android.morseflash.morsecode.transcriber.MorseTranscriberHeadlessFragment;
 import com.ovrhere.android.morseflash.ui.fragments.MainFragment;
 import com.ovrhere.android.morseflash.ui.fragments.ScreenFlashFragment;
+import com.ovrhere.android.morseflash.ui.prefs.PreferenceUtils;
 import com.ovrhere.android.morseflash.utils.CameraFlashUtil;
 
 /**
  * The main activity for the application. This is the primary entry point
  * of the app.
  * @author Jason J.
- * @version 0.4.0-20140605
+ * @version 0.5.0-20140606
  */
 public class MainActivity extends ActionBarActivity implements
 	MainFragment.OnFragmentInteractionListener,
@@ -68,6 +71,8 @@ public class MainActivity extends ActionBarActivity implements
 	/** If the message is being sent by flash light. */
 	private boolean isMessageByFlashLight = false;
 	
+	/** The reference to shared preferences for the application. */
+	private SharedPreferences prefs = null;
 	/////////////////////////////////////////////////////////////////////////////////////////////////
 	/// End members
 	////////////////////////////////////////////////////////////////////////////////////////////////
@@ -83,6 +88,8 @@ public class MainActivity extends ActionBarActivity implements
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
+		
+		prefs = PreferenceUtils.getPreferences(this);
 		
 		setContentView(R.layout.activity_main);
 		FragmentManager manager = getSupportFragmentManager();
@@ -100,7 +107,7 @@ public class MainActivity extends ActionBarActivity implements
 			morseTranscriber = mtFrag.getMorseTranscriber();
 			morseTranscriber.setOnSignalListener(this);
 		}
-		morseTranscriber.setOnMorseListener(this);
+		morseTranscriber.setOnMorseListener(this);		
 		
 		if (savedInstanceState == null) {
 			setFragToDefault();
@@ -221,13 +228,26 @@ public class MainActivity extends ActionBarActivity implements
 					ScreenFlashFragment.newInstance(),
 					ScreenFlashFragment.class.getName()
 					);
+			setScreenBrightnessMax(true);
 			setFullscreen(true);
 		} else {
 			//swap back in main.
 			setFragToDefault();
-			flashFrag = null;
+			flashFrag = null;			
+			setScreenBrightnessMax(false);
 			setFullscreen(false);
 		}		
+	}
+	/** Sets the activity screen brightness to max or default value.
+	 * @param max <code>true</code>: set to max, <code>false</code>: set to default.
+	 */
+	private void setScreenBrightnessMax(boolean max){
+		//FIXME Incompatible with "WindowManager.LayoutParams.FLAG_FULLSCREEN", which takes presedence 
+		//May be niche bug as it was found on Samsung API10 device.
+		WindowManager.LayoutParams lp = getWindow().getAttributes();
+        lp.screenBrightness = max 	? WindowManager.LayoutParams.BRIGHTNESS_OVERRIDE_FULL 
+        							: WindowManager.LayoutParams.BRIGHTNESS_OVERRIDE_NONE;
+        getWindow().setAttributes(lp);
 	}
 	/**
 	 * Sets the activity to be fullscreen, removing the action bar and status
@@ -236,18 +256,19 @@ public class MainActivity extends ActionBarActivity implements
 	 * <code>false</code> to return to normal screen.
 	 */
 	private void setFullscreen(boolean fullscreen){
+		Window window = getWindow();
 		if (fullscreen){
-			getWindow().setFlags(
+			window.setFlags(
 					WindowManager.LayoutParams.FLAG_FULLSCREEN, 
 					WindowManager.LayoutParams.FLAG_FULLSCREEN);
-			getWindow().clearFlags(
+			window.clearFlags(
 					WindowManager.LayoutParams.FLAG_FORCE_NOT_FULLSCREEN);
 			getSupportActionBar().hide();			
 		} else {
-			getWindow().setFlags(
+			window.setFlags(
 					WindowManager.LayoutParams.FLAG_FORCE_NOT_FULLSCREEN, 
 					WindowManager.LayoutParams.FLAG_FORCE_NOT_FULLSCREEN);
-			getWindow().clearFlags(
+			window.clearFlags(
 					WindowManager.LayoutParams.FLAG_FULLSCREEN);
 			getSupportActionBar().show();
 		}
@@ -268,12 +289,17 @@ public class MainActivity extends ActionBarActivity implements
 				}
 			} catch (IllegalStateException e){}
 			
-		} else if (flashFrag != null){
+		} else {
 			MainActivity.this.runOnUiThread(new Runnable(){
 			    public void run(){
-			    	flashFrag.flashBackground(state);
+			    	if (flashFrag != null){
+			    		synchronized (flashFrag) {
+			    			if (flashFrag != null) flashFrag.flashBackground(state);
+			    		}
+			    	}
 			    }
 			});
+			
 		}		
 	}
 	/** Ends the message and returns to starting state. */
@@ -288,11 +314,21 @@ public class MainActivity extends ActionBarActivity implements
 			if (mainFrag != null){
 				MainActivity.this.runOnUiThread(new Runnable(){
 				    public void run(){
-				    	mainFrag.setMessageComplete(true);
+				    	if (mainFrag != null){
+				    		synchronized (mainFrag) {
+				    			if (mainFrag != null) mainFrag.setMessageComplete(true);
+				    		}
+				    	}
+				    	
 				    }
 			    });
 			}
 		}
+	}
+	
+	/** Gets boolean preference based on bool id. Default value is false. */
+	private boolean getBoolPref(int boolKeyId) {
+		return prefs.getBoolean(getResources().getString(boolKeyId), false);
 	}
 	
 	/////////////////////////////////////////////////////////////////////////////////////////////////
@@ -303,21 +339,30 @@ public class MainActivity extends ActionBarActivity implements
 	public void onUpdateCameraFlashUtil(CameraFlashUtil cameraFlashUtil){
 		maincameraFlashUtil = cameraFlashUtil;
 	}
-		
+	
 	@Override
-	public void onSendButton(String message, boolean loop, 
-			boolean useFlashlight) {
-		isMessageByFlashLight = useFlashlight;
+	public void onSendButton(String message) {
+			boolean loop  = 
+				getBoolPref(R.string.com_ovrhere_morseflash_pref_KEY_LOOP_MESSAGE);
+		isMessageByFlashLight = 
+				getBoolPref(R.string.com_ovrhere_morseflash_pref_KEY_USE_CAMERA_FLASH);
 		
 		morseTranscriber.setMessage(message);
 		morseTranscriber.setLoop(loop);
 		inputMessage = message;
 		
-		if (!useFlashlight){
+		if (!isMessageByFlashLight){
 			startFlashFrag(true);
 		} else {
 			morseTranscriber.start();
 		}
+	}
+	
+	
+	@Override	@Deprecated
+	public void onSendButton(String message, boolean looped,
+			boolean useCameraFlash) {
+		onSendButton(message);
 	}
 	
 	@Override
@@ -333,7 +378,7 @@ public class MainActivity extends ActionBarActivity implements
 					}
 				} catch (IllegalStateException e){}
 			}
-		}
+		} 
 		endMessage();
 	}
 	
@@ -341,6 +386,8 @@ public class MainActivity extends ActionBarActivity implements
 	public void onFragmentViewLoaded() {
 		morseTranscriber.start();
 	}
+	
+	
 	
 	@Override
 	public void onSignalStart() {

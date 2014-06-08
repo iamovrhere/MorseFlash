@@ -25,7 +25,7 @@ import com.ovrhere.android.morseflash.utils.CameraFlashUtil;
  * The fragment for main. Activity must implement
  * {@link OnFragmentInteractionListener}.
  * 
- *  @version 0.3.0-20140605
+ *  @version 0.4.0-20140606
  *  @author Jason J.
  */
 public class MainFragment extends Fragment 
@@ -141,9 +141,22 @@ public class MainFragment extends Fragment
 	public void onDestroyView() {
 		super.onDestroyView();
 		//proper clean up.
-		cameraFlashUtil.close();
-		cameraFlashUtil = null;
+		closeCameraFlashUtil();
 	}
+
+	
+	@Override
+	public void onPause() {
+		super.onPause();
+		closeCameraFlashUtil();
+	}
+	
+	@Override
+	public void onResume() {	
+		super.onResume();
+		initCameraFlashUtil(getView());
+	}
+	
 	
 	/** Informs the fragment if sending has completed. */
 	public void setMessageComplete(boolean complete){
@@ -171,14 +184,18 @@ public class MainFragment extends Fragment
 		initLoopCheckbox(rootView, prefs);
 		initAdvancedContainerToggle(rootView);
 		
+		initCameraFlashUtil(rootView);
+		
+		initCameraFlashCheckbox(rootView, cameraFlashUtil);
+	}
+
+	/** Initialises the camera flash utility using the surface view. */
+	private void initCameraFlashUtil(View rootView) {
 		cameraFlashUtil = new CameraFlashUtil(
 				(SurfaceView) 
 					rootView.findViewById(R.id.com_ovrhere_morseflash_frag_main_surfaceview)
-				);
-		
+				);		
 		mFragmentInteractionListener.onUpdateCameraFlashUtil(cameraFlashUtil);
-		
-		initCameraFlashCheckbox(rootView, cameraFlashUtil);
 	}
 
 	/** Initialises the loop message checkbox. 
@@ -214,6 +231,12 @@ public class MainFragment extends Fragment
 		cb_useCamFlash = (CheckBox)
 				rootView.findViewById(R.id.com_ovrhere_morseflash_frag_main_checkbox_useCameraLight);
 		cb_useCamFlash.setOnCheckedChangeListener(this);			
+		cb_useCamFlash.setChecked(
+				prefs.getBoolean(
+						getResources().getString(
+								R.string.com_ovrhere_morseflash_pref_KEY_USE_CAMERA_FLASH),
+								false)
+				);
 		
 		if (cameraFlashUtil.isFlashAvailable()){
 			cb_useCamFlash.setEnabled(true);
@@ -232,6 +255,16 @@ public class MainFragment extends Fragment
 	/////////////////////////////////////////////////////////////////////////////////////////////////
 	/// Helper methods
 	////////////////////////////////////////////////////////////////////////////////////////////////
+
+	/** Closes the camera flash util and sets it to null. */
+	private void closeCameraFlashUtil() {
+		if (cameraFlashUtil != null){
+			cameraFlashUtil.close();
+			cameraFlashUtil = null;
+		}
+		mFragmentInteractionListener.onUpdateCameraFlashUtil(null);
+	}
+	
 	/** Toggles visbility of advanced settings container based on bool passed.
 	 * @param show <code>true</code> to show container, 
 	 * <code>false</code> to hide.
@@ -266,6 +299,17 @@ public class MainFragment extends Fragment
 		isSendingMessage = sending;
 	}
 	
+	/** Sets boolean pref based upon a supplied key id and value. 
+	 * @param boolKeyId The id to the bool pref key. 
+	 * @param value The value to set the preference as.	 */
+	private void setBoolPref(int boolKeyId, boolean value) {
+		SharedPreferences.Editor editor = prefs.edit();
+		editor.putBoolean(
+				getResources().getString(boolKeyId), 
+						value);
+		editor.commit();
+	}
+	
 	/////////////////////////////////////////////////////////////////////////////////////////////////
 	/// Listeners
 	////////////////////////////////////////////////////////////////////////////////////////////////
@@ -285,11 +329,8 @@ public class MainFragment extends Fragment
 					b_sendMessage.setEnabled(true);
 					setSendingMessage(true);
 				}
-				//send message. can be abstract _onSendButton if necessary.
 				mFragmentInteractionListener.onSendButton(
-						et_messageInput.getText().toString(),
-						cb_loopMessage.isChecked(),
-						cb_useCamFlash.isChecked()
+						et_messageInput.getText().toString()
 					);
 			}
 			
@@ -304,18 +345,18 @@ public class MainFragment extends Fragment
 		
 		switch	(buttonView.getId()){
 		case R.id.com_ovrhere_morseflash_frag_main_checkbox_loopMessage:
-			SharedPreferences.Editor editor = prefs.edit();
-			editor.putBoolean(
-					getResources().getString(
-							R.string.com_ovrhere_morseflash_pref_KEY_LOOP_MESSAGE), 
+			setBoolPref(R.string.com_ovrhere_morseflash_pref_KEY_LOOP_MESSAGE, 
+						buttonView.isChecked());
+			break;
+		case R.id.com_ovrhere_morseflash_frag_main_checkbox_useCameraLight:
+			setBoolPref(R.string.com_ovrhere_morseflash_pref_KEY_USE_CAMERA_FLASH, 
 					buttonView.isChecked());
-			editor.commit();
 			break;
 		case R.id.com_ovrhere_morseflash_frag_main_toggle_advanced:
 			showAdvancedSettings(buttonView.isChecked());
 			break;				
 		}
-	}
+	}	
 	
 	/////////////////////////////////////////////////////////////////////////////////////////////////
 	/// Internal interfaces 
@@ -323,7 +364,7 @@ public class MainFragment extends Fragment
 	
 	/** The interface for fragment interactions. 
 	 * Currently account for : sendButton click, cancelButton click, CameraFlashUtil updates.
-	 * @version 0.1.0-20140605
+	 * @version 0.2.0-20140606
 	 * */ 
 	public interface OnFragmentInteractionListener {
 		/** Updates the camera flash util as soon as the fragment creates it.
@@ -337,8 +378,15 @@ public class MainFragment extends Fragment
 		 * @param loop Whether or not to loop the message.
 		 * @param useFlashlight <code>true</code> to use the camera light, 
 		 * <code>false</code> to use screen. 
+		 * @deprecated Use {@link #onSendButton(String)} instead. 
+		 * Looping and camera flash should be accessed through the 
+		 * {@link SharedPreferences} (via {@link PreferenceUtils}). 
 		 */
+		@Deprecated
 		public void onSendButton(String message, boolean looped, boolean useCameraFlash);
+		/** The action to perform when the send button is sent. 
+		 * @param message The raw message to pass on. */
+		public void onSendButton(String message);
 	}
 	 
 }
