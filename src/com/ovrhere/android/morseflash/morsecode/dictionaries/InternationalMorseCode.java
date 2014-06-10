@@ -23,7 +23,7 @@ import java.util.Map.Entry;
  * <a href="http://www.itu.int/rec/R-REC-M.1677-1-200910-I/">official standards</a>.
  * 
  * @author Jason J.
- * @version 0.2.0-20140513
+ * @version 0.2.1-20140610
  */
 public class InternationalMorseCode implements MorseDictionary {
 	/** The list of readable characters and their morse code equivalent. */
@@ -76,7 +76,7 @@ public class InternationalMorseCode implements MorseDictionary {
 		
 		dictionary.put(	
 				'k',
-				new MorseCharacter(new Integer[]{DOT, DASH, DOT})
+				new MorseCharacter(new Integer[]{DASH, DOT, DASH})
 				);
 		dictionary.put(	
 				'l',
@@ -242,7 +242,7 @@ public class InternationalMorseCode implements MorseDictionary {
 				new MorseCharacter(new Integer[]{DOT, DOT, DASH, DASH, DOT, DASH})
 				);
 		dictionary.put(	
-				'@',
+				Character.toLowerCase('@'),
 				new MorseCharacter(new Integer[]{DOT, DASH, DASH, DOT, DASH, DOT})
 				);
 		
@@ -252,7 +252,7 @@ public class InternationalMorseCode implements MorseDictionary {
 	public Character decodeChar(MorseCharacter mcharacter) {
 		if (dictionary.containsValue(mcharacter)){
 			for (Entry<Character, MorseCharacter> entry : dictionary.entrySet()) {
-				if (entry.getValue() == mcharacter){
+				if (entry.getValue().equals(mcharacter)){
 					return entry.getKey();
 				}
 			}

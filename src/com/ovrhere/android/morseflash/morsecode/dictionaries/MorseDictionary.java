@@ -55,7 +55,7 @@ public interface MorseDictionary {
 	 * {@link MorseCharacter.Builder} to create characters.  
 	 * </p>
 	 * @author Jason J.
-	 * @version 0.1.0-20140512
+	 * @version 0.2.0-20140610
 	 */
 	static public class MorseCharacter {
 		private List<Integer> pattern = new ArrayList<Integer>();
@@ -91,10 +91,29 @@ public interface MorseDictionary {
 		
 		/**
 		 * @author Jason J.
-		 * @version 0.2.0-20140513
+		 * @version 0.3.0-20140610
 		 */
 		static public class Builder {
 			private List<Integer> bpattern = new ArrayList<Integer>();
+			/** Creates a {@link MorseCharacter} with the arguments supplied to  
+			 * the function. Note that this uses string manipulation;
+			 *  using {@link #addDash()} and {@link #addDot()} are more efficient in building.
+			 * @param pattern A pattern of dashes('-' or '_') and dots ('.'). 
+			 * Note that any other character will be ignored.
+			 * @return {@link MorseCharacter}
+			 */
+			static public MorseCharacter create(String pattern){
+				String[] symbols = pattern.split("");
+				Builder builder = new Builder();
+				for (String string : symbols) {
+					if (string.equals("-") || string.equals("_")){
+						builder.addDash();
+					} else if (string.equals(".")) {
+						builder.addDot();
+					}
+				}
+				return builder.create();
+			}
 			/** Creates a {@link MorseCharacter} with the arguments supplied to this 
 			 * builder. 
 			 * @return {@link MorseCharacter} 
@@ -121,6 +140,21 @@ public interface MorseDictionary {
 		/////////////////////////////////////////////////////////////////////////////////////////////////
 		/// The overridden functions for comparisons
 		////////////////////////////////////////////////////////////////////////////////////////////////
+		
+		@Override
+		public String toString() {
+			StringBuilder sBuilder = new StringBuilder();
+			final int SIZE = pattern.size();
+			for (int index = 0; index < SIZE; index++) {
+				if (pattern.get(index).equals(DOT)){
+					sBuilder.append(".");
+				} else if (pattern.get(index).equals(DASH)){
+					sBuilder.append("-");
+				}				
+			}
+			return this.getClass().getName() + 
+					"('"+sBuilder.toString()+"')"; //the character as a morse string. 
+		}
 		
 		@Override
 		public boolean equals(Object obj) {
