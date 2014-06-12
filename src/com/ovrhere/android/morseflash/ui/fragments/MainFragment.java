@@ -40,7 +40,7 @@ import com.ovrhere.android.morseflash.utils.CameraFlashUtil;
  * The fragment for main. Activity must implement
  * {@link OnFragmentInteractionListener}.
  * 
- *  @version 0.4.0-20140606
+ *  @version 0.4.1-20140611
  *  @author Jason J.
  */
 public class MainFragment extends Fragment 
@@ -337,6 +337,10 @@ public class MainFragment extends Fragment
 				mFragmentInteractionListener.onCancelButton();
 				setSendingMessage(false);
 			} else {
+				String msg = et_messageInput.getText().toString();
+				if (msg.trim().isEmpty()){
+					break;//if there is no message, nothing to send.
+				}
 				//prevent double taps
 				b_sendMessage.setEnabled(false);
 				if (cb_useCamFlash.isChecked()){						
@@ -344,9 +348,7 @@ public class MainFragment extends Fragment
 					b_sendMessage.setEnabled(true);
 					setSendingMessage(true);
 				}
-				mFragmentInteractionListener.onSendButton(
-						et_messageInput.getText().toString()
-					);
+				mFragmentInteractionListener.onSendButton(msg);
 			}
 			
 			break;
