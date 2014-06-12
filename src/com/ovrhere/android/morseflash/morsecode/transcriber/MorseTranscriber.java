@@ -26,20 +26,33 @@ import com.ovrhere.android.morseflash.morsecode.dictionaries.MorseDictionary.Mor
 
 /**
  * <p>Performs the basic transcription of a string message into morse code
- * by means of a {@link MorseDictionary}. </p>
+ * by means of a {@link MorseDictionary}. This follows the general rules of
+ * <a href="http://en.wikipedia.org/wiki/Morse_code">Morse code</a>, namely:
+ * <ul>
+ * <li>dots are 1 Time Unit (TU)</li>
+ * <li>dashes are {@value #REL_INTERVAL_DASH}TU</li>
+ * <li>intervals between intra-characters (dashes/dots) are 1TU</li>
+ * <li>intervals between characters (a b c) are {@value #REL_INTERVAL_CHARACTER}TU</li>
+ * <li>intervals between words are {@value #REL_INTERVAL_WORD}TU</li> 
+ * </ul>
+ * An additional (non-standard) interval of {@value #REL_INTERVAL_LOOP_MESSAGE}TU
+ * is given between looped-message iterations. Default unit time is 
+ * {@value #DEFAULT_UNIT_TIME}ms.
+ * </p>
  * 
  * <p>Please note this class is not safe for within rotation contexts.
  * Consider using {@link MorseTranscriberHeadlessFragment} within activities.
  * </p> 
  * 
  * @author Jason J.
- * @version 0.1.3-20140605
+ * @version 0.2.0-20140611
  */
 public class MorseTranscriber implements IMorseTranscriber {
 	/** The tag used for logging. */
 	@SuppressWarnings("unused")
 	final static private String LOGTAG = MorseTranscriber.class.getSimpleName();
-	
+	/** The default unit time in milliseconds. */
+	final private static int DEFAULT_UNIT_TIME = 100; //ms
 	/* * The relative interval between each pattern unit. */
 	//final private static int REL_INTERVAL_PATTERN_UNIT = 1; //units
 	/** The relative interval for each dash. */
@@ -55,8 +68,9 @@ public class MorseTranscriber implements IMorseTranscriber {
 	/// End constants 
 	////////////////////////////////////////////////////////////////////////////////////////////////
 	
-	/** The number of milliseconds considered to be one unit. Default value is 200. */ 
-	private int unitTime = 100; //ms
+	/** The number of milliseconds considered to be one unit. 
+	 * Default value is {@value #DEFAULT_UNIT_TIME}. */ 
+	private int unitTime = DEFAULT_UNIT_TIME; //ms
 	/** The timing for between dots and dashes is unit time. */
 	private int morseSymbolInterval = unitTime;
 	/** The timing for dots is unit time. */
@@ -137,6 +151,9 @@ public class MorseTranscriber implements IMorseTranscriber {
 	}
 	@Override
 	public void setUnitTime(int unitTime) {
+		if (unitTime < 1){
+			throw new IllegalArgumentException("Unit time cannot be <=0");
+		}
 		this.unitTime = unitTime;
 		morseDotInterval = unitTime;
 		morseSymbolInterval = unitTime;
@@ -161,6 +178,10 @@ public class MorseTranscriber implements IMorseTranscriber {
 	
 	@Override
 	public boolean start(){
+		if (messageList.length == 0 ){
+			//prevent blank messages
+			return false;
+		}
 		//start thread. safety to prevent multiple starts.		
 		try {
 			//throws exception if already started.
@@ -221,8 +242,11 @@ public class MorseTranscriber implements IMorseTranscriber {
 		final int SIZE = morseWord.size();
 		for (int index = 0; index < SIZE; index++) {
 			parseMorseCharacter(start, morseWord.get(index));
-			//set's the next character's start time as 1 unit from the last.
-			offsetTime(start, morseCharInterval * (index+1));
+			//if there are more letters in the word.
+			if(index + 1 < SIZE){
+				//set's the next character's start time as 1 unit from the last.
+				offsetTime(start, morseCharInterval * (index+1));
+			}
 		}
 	}
 	
@@ -233,12 +257,13 @@ public class MorseTranscriber implements IMorseTranscriber {
 	 */
 	private void parseMorseCharacter(Date start, MorseCharacter morseCharacter) {
 		final List<Integer> pattern = morseCharacter.getPattern();
-		int index = 0;
-		for (Integer symbol : pattern) {
+		final int SIZE = pattern.size();
+		for(int index = 0; index < SIZE; index++){
+		//for (Integer symbol : pattern) {
 			if (!continueMessageProcessing){ //if we are not to continue
 				break;
 			}
-			index++;
+			Integer symbol = pattern.get(index);
 			
 			MorseSignalTask startSignal = new MorseSignalTask(true, m_SignalListener);
 			MorseSignalTask endSignal = new MorseSignalTask(false, m_SignalListener);
@@ -255,7 +280,9 @@ public class MorseTranscriber implements IMorseTranscriber {
 			signalTimer.schedule(endSignal, end);
 			
 			start.setTime(end.getTime());
-			offsetTime(start, morseSymbolInterval * (index+1));
+			if(index + 1 < SIZE){
+				offsetTime(start, morseSymbolInterval * (index+1));
+			}
 		}
 	}
 	
@@ -355,7 +382,11 @@ public class MorseTranscriber implements IMorseTranscriber {
 							index < SIZE2 && continueMessageProcessing; 
 							index++) {
 					parseMorseWord(start, message.get(index));
-					offsetTime(start, morseWordInterval * (index+1));
+					//if not the last word of the message.
+					if(index + 1 < SIZE2){
+						//offset by a word interval
+						offsetTime(start, morseWordInterval * (index+1));
+					}
 				}				
 				
 				if (loopMessage){
