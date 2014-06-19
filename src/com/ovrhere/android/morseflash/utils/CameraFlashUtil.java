@@ -19,6 +19,7 @@ import java.io.IOException;
 import java.util.List;
 
 import android.hardware.Camera;
+import android.hardware.Camera.AutoFocusCallback;
 import android.hardware.Camera.Parameters;
 import android.util.Log;
 import android.view.SurfaceHolder;
@@ -51,12 +52,18 @@ import android.view.View;
  *</code>
  * </p>
  * @author Jason J.
- * @version 0.2.1-20140605
+ * @version 0.2.2-20140619
  */
 public class CameraFlashUtil implements SurfaceHolder.Callback {
-	//TODO: futher reading on this topic http://stackoverflow.com/questions/5503480/use-camera-flashlight-in-android
-	/** The class name. */
-	final static private String CLASS_NAME = CameraFlashUtil.class.getSimpleName();
+	/** The Log tag. */
+	final static private String LOGTAG = CameraFlashUtil.class.getSimpleName();
+	/** Dummy Autofocus callback for camera flash, see:
+	 *  http://stackoverflow.com/questions/5503480/use-camera-flashlight-in-android
+	 */
+	final static private AutoFocusCallback autoFocusCallback = new AutoFocusCallback() {
+        public void onAutoFocus(boolean success, Camera camera) {
+        }
+    };
 	
 	/** The surface holder in view. */
 	private SurfaceHolder mHolder = null;
@@ -136,9 +143,22 @@ public class CameraFlashUtil implements SurfaceHolder.Callback {
 		Parameters params = mCamera.getParameters();
 		if (on){
 			//Turn flash LED on.
-			params.setFlashMode(Parameters.FLASH_MODE_TORCH);
-			mCamera.setParameters(params);      
+			String flashMode = params.getFlashMode();
+			if (	flashMode != null &&
+					flashMode.contains(Parameters.FLASH_MODE_TORCH)){
+				params.setFlashMode(Parameters.FLASH_MODE_TORCH);
+			} else {
+				//if torch mode not supported.
+				params.setFlashMode(Parameters.FLASH_MODE_ON);
+			}
+			mCamera.setParameters(params);
 			mCamera.startPreview();
+			try{
+				mCamera.autoFocus(autoFocusCallback);
+			} catch (Exception e){
+				//TODO determine which exceptions, if any, throw here
+				Log.w(LOGTAG, "Exception during autofocus: " + e);
+			}
 		} else {
 			//Turn flash LED off.
 			params.setFlashMode(Parameters.FLASH_MODE_OFF);
@@ -187,7 +207,7 @@ public class CameraFlashUtil implements SurfaceHolder.Callback {
 			mCamera = Camera.open();
 		} catch (RuntimeException e){
 			//may fail to connect to service, e.g. simulator
-			Log.w(CLASS_NAME, "Run time error: " + e);
+			Log.w(LOGTAG, "Run time error: " + e);
 			return false;
 		}
 		
