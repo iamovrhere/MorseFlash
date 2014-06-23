@@ -40,12 +40,16 @@ import com.ovrhere.android.morseflash.morsecode.dictionaries.MorseDictionary.Mor
  * {@value #DEFAULT_UNIT_TIME}ms.
  * </p>
  * 
+ * <p>There is an additional delay before/after a message set by 
+ * 
+ * Default pad time is {@value #DEFAULT_UNIT_TIME}ms.</p>
+ * 
  * <p>Please note this class is not safe for within rotation contexts.
  * Consider using {@link MorseTranscriberHeadlessFragment} within activities.
  * </p> 
  * 
  * @author Jason J.
- * @version 0.2.0-20140611
+ * @version 0.3.0-20140623
  */
 public class MorseTranscriber implements IMorseTranscriber {
 	/** The tag used for logging. */
@@ -53,6 +57,9 @@ public class MorseTranscriber implements IMorseTranscriber {
 	final static private String LOGTAG = MorseTranscriber.class.getSimpleName();
 	/** The default unit time in milliseconds. */
 	final private static int DEFAULT_UNIT_TIME = 100; //ms
+	/** The default pad time in milliseconds. */
+	final private static int DEFAULT_PAD_TIME = 500; //ms
+	
 	/* * The relative interval between each pattern unit. */
 	//final private static int REL_INTERVAL_PATTERN_UNIT = 1; //units
 	/** The relative interval for each dash. */
@@ -67,6 +74,8 @@ public class MorseTranscriber implements IMorseTranscriber {
 	/////////////////////////////////////////////////////////////////////////////////////////////////
 	/// End constants 
 	////////////////////////////////////////////////////////////////////////////////////////////////
+	/** The number of milliseconds to wait before sending a message. */
+	private int messagePadTime = DEFAULT_PAD_TIME; 
 	
 	/** The number of milliseconds considered to be one unit. 
 	 * Default value is {@value #DEFAULT_UNIT_TIME}. */ 
@@ -148,6 +157,13 @@ public class MorseTranscriber implements IMorseTranscriber {
 	@Override 
 	public boolean isMessageLooped() {
 		return loopMessage;
+	}
+	@Override
+	public void setPadTime(int padTime) {
+		if (padTime < 0){
+			throw new IllegalArgumentException("Pad time cannot be < 0");
+		}
+		this.messagePadTime = padTime;		
 	}
 	@Override
 	public void setUnitTime(int unitTime) {
@@ -342,7 +358,7 @@ public class MorseTranscriber implements IMorseTranscriber {
 						"Cannot start already running task");
 			}
 			continueMessageProcessing = true;
-			List<ArrayList<MorseCharacter>> message = 
+			final List<ArrayList<MorseCharacter>> message = 
 					new ArrayList<ArrayList<MorseCharacter>>();		
 			
 			synchronized (messageList) {
@@ -356,9 +372,15 @@ public class MorseTranscriber implements IMorseTranscriber {
 			}
 			if (m_MorseListener != null){
 				m_MorseListener.onMorseParsed();
-			}			
-			sendMorseMessage(message);
-						
+			}
+			
+			
+			Date delay = new Date();
+			offsetTime(delay, messagePadTime);
+			signalTimer.schedule(new TimerTask() {						
+				@Override
+				public void run() { sendMorseMessage(message);}
+			}, delay);					
 		}
 		/**
 		 * Sends the morse message.
@@ -370,6 +392,7 @@ public class MorseTranscriber implements IMorseTranscriber {
 				if (!continueMessageProcessing){
 					//we have finished
 					messageIsSending = false;
+					
 					if (m_MorseListener != null){
 						m_MorseListener.onMorseCompleted();
 					}
@@ -394,7 +417,8 @@ public class MorseTranscriber implements IMorseTranscriber {
 					offsetTime(start, morseLoopMessageInterval);					
 				} else {
 					//if not looping, no more processing.
-					continueMessageProcessing = false;					
+					continueMessageProcessing = false;	
+					offsetTime(start, messagePadTime);
 				}
 				signalTimer.schedule(new TimerTask() {						
 					@Override

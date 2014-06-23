@@ -21,7 +21,7 @@ package com.ovrhere.android.morseflash.morsecode.transcriber;
  * Used to give a common interface between the object and the HeadlessFragment.
  * 
  * @author Jason J.
- * @version 0.2.0-20140611
+ * @version 0.3.0-20140623
  */
 interface IMorseTranscriber {
 	/////////////////////////////////////////////////////////////////////////////////////////////////
@@ -51,9 +51,13 @@ interface IMorseTranscriber {
 	public boolean isMessageLooped();
 	
 	/** Sets the unit time equivalent to one dot.
-	 * @param unitTime Time in milliseconds. 
-	 * @throws If input is <= 0. */
-	public void setUnitTime(int unitTime) throws IllegalArgumentException;
+	 * @param unitTime Time in milliseconds. Must be > 0. */
+	public void setUnitTime(int unitTime);
+	
+	/** Sets the padd time before and after a message.
+	 * @param padTime The time in milliseconds to wait before sending. 
+	 * Must be >= 0. 	 */
+	public void setPadTime(int padTime);
 	
 	/** @return The unit time equivalent to one dot in milliseconds.	 */
 	public int getUnitTime();
