@@ -40,7 +40,7 @@ import com.ovrhere.android.morseflash.utils.CameraFlashUtil;
  * The fragment for main. Activity must implement
  * {@link OnFragmentInteractionListener}.
  * 
- *  @version 0.4.1-20140611
+ *  @version 0.4.2-20140623
  *  @author Jason J.
  */
 public class MainFragment extends Fragment 
@@ -253,7 +253,7 @@ public class MainFragment extends Fragment
 								false)
 				);
 		
-		if (cameraFlashUtil.isFlashAvailable()){
+		if (cameraFlashUtil != null && cameraFlashUtil.isFlashAvailable()){
 			cb_useCamFlash.setEnabled(true);
 			cb_useCamFlash.setText(
 					getResources().getString(R.string.com_ovrhere_checkbox_camlight)
