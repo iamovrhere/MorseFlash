@@ -39,7 +39,7 @@ import com.ovrhere.android.morseflash.utils.CameraFlashUtil;
  * The main activity for the application. This is the primary entry point
  * of the app.
  * @author Jason J.
- * @version 0.5.0-20140606
+ * @version 0.5.1-20140623
  */
 public class MainActivity extends ActionBarActivity implements
 	MainFragment.OnFragmentInteractionListener,
@@ -120,7 +120,12 @@ public class MainActivity extends ActionBarActivity implements
 			mtFrag.setMorseTranscriber(morseTranscriber);
 		} else {
 			morseTranscriber = mtFrag.getMorseTranscriber();
-			morseTranscriber.setOnSignalListener(this);
+			if (morseTranscriber == null){
+				morseTranscriber = new MorseTranscriber(new InternationalMorseCode(), this);
+				mtFrag.setMorseTranscriber(morseTranscriber);
+			} else {
+				morseTranscriber.setOnSignalListener(this);
+			}
 		}
 		morseTranscriber.setOnMorseListener(this);		
 		
@@ -137,12 +142,15 @@ public class MainActivity extends ActionBarActivity implements
 			}
 		}
 	}	
+		
+	
 	@Override
 	protected void onDestroy() {
 		super.onDestroy();
 		if (morseTranscriber != null){
 			//clean up activity references
 			morseTranscriber.setOnSignalListener(null);
+			morseTranscriber.cancel();
 		}
 	}
 
@@ -173,7 +181,7 @@ public class MainActivity extends ActionBarActivity implements
 	@Override
 	protected void onPause() {
 		super.onPause();
-		//maincameraFlashUtil.close();
+		onCancelButton();
 	}	
 	
 	@Override
@@ -399,7 +407,9 @@ public class MainActivity extends ActionBarActivity implements
 	
 	@Override
 	public void onFragmentViewLoaded() {
-		morseTranscriber.start();
+		if (!morseTranscriber.isRunning()){
+			morseTranscriber.start();
+		}
 	}
 	
 	
