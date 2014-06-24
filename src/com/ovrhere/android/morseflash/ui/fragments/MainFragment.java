@@ -40,7 +40,7 @@ import com.ovrhere.android.morseflash.utils.CameraFlashUtil;
  * The fragment for main. Activity must implement
  * {@link OnFragmentInteractionListener}.
  * 
- *  @version 0.4.2-20140623
+ *  @version 0.4.3-20140623
  *  @author Jason J.
  */
 public class MainFragment extends Fragment 
@@ -169,6 +169,7 @@ public class MainFragment extends Fragment
 	@Override
 	public void onResume() {	
 		super.onResume();
+		closeCameraFlashUtil();
 		initCameraFlashUtil(getView());
 	}
 	
