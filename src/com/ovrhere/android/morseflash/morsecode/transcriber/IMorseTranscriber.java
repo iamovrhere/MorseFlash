@@ -21,7 +21,7 @@ package com.ovrhere.android.morseflash.morsecode.transcriber;
  * Used to give a common interface between the object and the HeadlessFragment.
  * 
  * @author Jason J.
- * @version 0.3.0-20140623
+ * @version 0.4.0-20140623
  */
 interface IMorseTranscriber {
 	/////////////////////////////////////////////////////////////////////////////////////////////////
@@ -49,6 +49,10 @@ interface IMorseTranscriber {
 	/** @return <code>true</code> if the message is set to loop on completion, 
 	 * <code>false</code> otherwise.	 */
 	public boolean isMessageLooped();
+	/** @return <code>true</code> if the transcriber is transcribing, 
+	 * <code>false</code> otherwise.
+	 */
+	public boolean isRunning();
 	
 	/** Sets the unit time equivalent to one dot.
 	 * @param unitTime Time in milliseconds. Must be > 0. */

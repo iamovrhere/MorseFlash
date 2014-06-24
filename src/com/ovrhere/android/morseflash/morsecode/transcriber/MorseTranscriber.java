@@ -49,7 +49,7 @@ import com.ovrhere.android.morseflash.morsecode.dictionaries.MorseDictionary.Mor
  * </p> 
  * 
  * @author Jason J.
- * @version 0.3.0-20140623
+ * @version 0.4.0-20140623
  */
 public class MorseTranscriber implements IMorseTranscriber {
 	/** The tag used for logging. */
@@ -154,6 +154,12 @@ public class MorseTranscriber implements IMorseTranscriber {
 	public void setLoop(boolean loopMessage) {
 		this.loopMessage = loopMessage;
 	}
+	
+	@Override
+	public boolean isRunning() {
+		return messageIsSending;
+	}
+	
 	@Override 
 	public boolean isMessageLooped() {
 		return loopMessage;
