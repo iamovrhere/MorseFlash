@@ -58,6 +58,9 @@
 		        android:layout_centerHorizontal="true"
 		        android:layout_below="@+id/com_ovrhere_morseflash_frag_main_editext_textToMorse_input"
 		        android:enabled="false"
+		        android:paddingTop="10dp"
+		        android:paddingBottom="10dp"
+		        android:paddingRight="20dp"
 		        />
 	
 	    
@@ -119,6 +122,9 @@
 		        android:text="@string/com_ovrhere_checkbox_loopMessage" 
 		        android:enabled="true"
 		        style="@style/CheckBoxAppTheme"
+		        android:paddingTop="10dp"
+		        android:paddingBottom="10dp"
+		        android:paddingRight="20dp"
 		        />	    
 	    </LinearLayout>
      </LinearLayout>
