@@ -52,11 +52,12 @@ import android.view.View;
  *</code>
  * </p>
  * @author Jason J.
- * @version 0.2.2-20140619
+ * @version 0.2.3-20140623
  */
 public class CameraFlashUtil implements SurfaceHolder.Callback {
 	/** The Log tag. */
 	final static private String LOGTAG = CameraFlashUtil.class.getSimpleName();
+	
 	/** Dummy Autofocus callback for camera flash, see:
 	 *  http://stackoverflow.com/questions/5503480/use-camera-flashlight-in-android
 	 */
@@ -187,6 +188,7 @@ public class CameraFlashUtil implements SurfaceHolder.Callback {
 		}
 		if (mCamera != null){
 			mCamera.stopPreview();
+			mCamera.setPreviewCallback(null);
 			mCamera.release();
 			mCamera = null;
 		}
@@ -203,8 +205,8 @@ public class CameraFlashUtil implements SurfaceHolder.Callback {
 	private boolean _setCameraSurfaceView(SurfaceView surfaceView){
 		mHolder = surfaceView.getHolder();
 		mHolder.addCallback(this);
-		try {
-			mCamera = Camera.open();
+		try {			
+			mCamera = Camera.open(Camera.CameraInfo.CAMERA_FACING_BACK );
 		} catch (RuntimeException e){
 			//may fail to connect to service, e.g. simulator
 			Log.w(LOGTAG, "Run time error: " + e);
