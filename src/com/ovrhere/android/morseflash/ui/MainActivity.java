@@ -39,7 +39,7 @@ import com.ovrhere.android.morseflash.utils.CameraFlashUtil;
  * The main activity for the application. This is the primary entry point
  * of the app.
  * @author Jason J.
- * @version 0.5.1-20140623
+ * @version 0.5.2-20140624
  */
 public class MainActivity extends ActionBarActivity implements
 	MainFragment.OnFragmentInteractionListener,
@@ -61,10 +61,10 @@ public class MainActivity extends ActionBarActivity implements
 	/** Bundle key: The message for the input screen. String. */
 	final static private String KEY_INPUT_MESSAGE = 
 			CLASS_NAME + ".KEY_INPUT_MESSAGE";	
+		
 	/////////////////////////////////////////////////////////////////////////////////////////////////
 	/// end constants
 	////////////////////////////////////////////////////////////////////////////////////////////////
-	
 	/** The morse transcriber as set in the headless fragment. */
 	private MorseTranscriber morseTranscriber  = null;
 	
@@ -85,6 +85,12 @@ public class MainActivity extends ActionBarActivity implements
 	private String inputMessage = "";
 	/** If the message is being sent by flash light. */
 	private boolean isMessageByFlashLight = false;
+	
+	/** Activity visibility. Set on #onResume() and #onPause(); */
+	private boolean activityVisible = false;
+	/** The count of unseen signals during {@link #activityVisible} == false
+	 * Resets to 0 in {@link #onResume()}	 */
+	private int unseenSignals = 0;
 	
 	/** The reference to shared preferences for the application. */
 	private SharedPreferences prefs = null;
@@ -177,12 +183,24 @@ public class MainActivity extends ActionBarActivity implements
 	/////////////////////////////////////////////////////////////////////////////////////////////////
 	/// End creation
 	////////////////////////////////////////////////////////////////////////////////////////////////
+
+	@Override
+	protected void onResume() {
+		super.onResume();
+		activityVisible = true;
+		if (unseenSignals > 0){
+			//if there were unseen signals, we must have suspended.
+			unseenSignals = 0;
+			onCancelButton(); //cancel signal.
+		}
+	};
 	
 	@Override
 	protected void onPause() {
 		super.onPause();
-		onCancelButton();
-	}	
+		activityVisible = false;
+	}
+	
 	
 	@Override
 	public void onAttachFragment(Fragment fragment) {
@@ -194,6 +212,7 @@ public class MainActivity extends ActionBarActivity implements
 			mainFrag = ((MainFragment) fragment);
 		}
 	}
+	
 	
 	@Override
 	public void onBackPressed() {
@@ -424,6 +443,16 @@ public class MainActivity extends ActionBarActivity implements
 	public void onSignalEnd() {
 		signalAction(false);
 		Log.d(CLASS_NAME, "onSignalEnd");
+		if (!activityVisible){
+			unseenSignals++;
+			//if not visible, we count the unsceen ticks.
+			if (unseenSignals > 3){
+				//if over threshhold. cancel.
+				if (morseTranscriber != null){
+					morseTranscriber.cancel();
+				}
+			}
+		}
 	}
 	
 	@Override
