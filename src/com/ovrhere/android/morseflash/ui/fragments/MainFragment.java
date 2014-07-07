@@ -40,7 +40,7 @@ import com.ovrhere.android.morseflash.utils.CameraFlashUtil;
  * The fragment for main. Activity must implement
  * {@link OnFragmentInteractionListener}.
  * 
- *  @version 0.4.3-20140623
+ *  @version 0.4.4-20140707
  *  @author Jason J.
  */
 public class MainFragment extends Fragment 
@@ -145,6 +145,7 @@ public class MainFragment extends Fragment
 			et_messageInput.setText(
 						savedInstanceState.getString(KEY_MESSAGE_INPUT_CONTENT)
 					);
+			et_messageInput.clearFocus();
 			cb_advancedSettings.setChecked(
 						savedInstanceState.getBoolean(KEY_SHOW_ADVANCED_TOGGLE)
 					);
