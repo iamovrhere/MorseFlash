@@ -153,10 +153,10 @@ public class ScreenFlashFragment extends Fragment implements OnClickListener{
 	 * @version 0.2.0-20140527
 	 */
 	static public interface OnFragmentInteraction {
-		/** Called when the cancel button is pressed.
+		/** Called when {@link ScreenFlashFragment}'s cancel button is pressed.
 		 * @param frag The fragment it is being called from. */
 		public void onCancelButton();
-		/** Called when fragment has finished loading. */
+		/** Called when {@link ScreenFlashFragment} has finished loading. */
 		public void onFragmentViewLoaded();
 	}
 	
