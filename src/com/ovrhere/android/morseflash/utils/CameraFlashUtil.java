@@ -37,7 +37,7 @@ import android.view.View;
  * In order to work on as many devices as possible, the SurfaceView in question
  * MUST:
  * <ul>
- * <li>Have {@link View#VISIBLE}</li>
+ * <li><s>Have {@link View#VISIBLE}</s>(The view will be made invisible)</li>
  * <li>Have a height x width > 0dp</li>
  * <li>Be within visible frame</li>
  * </ul> 
@@ -52,7 +52,7 @@ import android.view.View;
  *</code>
  * </p>
  * @author Jason J.
- * @version 0.2.3-20140623
+ * @version 0.2.4-20140711
  */
 public class CameraFlashUtil implements SurfaceHolder.Callback {
 	/** The Log tag. */
@@ -70,6 +70,9 @@ public class CameraFlashUtil implements SurfaceHolder.Callback {
 	private SurfaceHolder mHolder = null;
 	/** The camera reference for turning on an off the flash. */
 	private Camera mCamera = null;
+	
+	/** Whether or not the camera is active. Default is false. */
+	private boolean cameraActive = false;
 	
 	public CameraFlashUtil(SurfaceView surfaceView){
 		_setCameraSurfaceView(surfaceView);
@@ -137,35 +140,45 @@ public class CameraFlashUtil implements SurfaceHolder.Callback {
 	 * calling {@link #close()}).
 	 */
 	public void flashLed(boolean on) throws IllegalStateException {
-		//if not available, quit.
-		if (mCamera == null){
-			throw new IllegalStateException("Flash is not available");
-		}
-		Parameters params = mCamera.getParameters();
-		if (on){
-			//Turn flash LED on.
-			String flashMode = params.getFlashMode();
-			if (	flashMode != null &&
-					flashMode.contains(Parameters.FLASH_MODE_TORCH)){
+		synchronized (mCamera) {
+			//if not available, quit.
+			if (mCamera == null){
+				throw new IllegalStateException("Flash is not available");
+			}
+			if (!cameraActive){
+				initCamera();
+			}
+			if (!cameraActive){ //if still not active.
+				throw new IllegalStateException("Flash is not available");
+			}
+			
+			Parameters params = mCamera.getParameters();
+			if (on){
+				//Turn flash LED on.
 				params.setFlashMode(Parameters.FLASH_MODE_TORCH);
+				String flashMode = params.getFlashMode();
+				if (	flashMode != null &&
+						!flashMode.contains(Parameters.FLASH_MODE_TORCH)){
+					//if torch mode not supported.
+					params.setFlashMode(Parameters.FLASH_MODE_ON);
+				}
+				mCamera.setParameters(params);
+				mCamera.startPreview();
+				try{
+					mCamera.autoFocus(autoFocusCallback);
+				} catch (Exception e){
+					//TODO determine which exceptions, if any, throw here
+					Log.w(LOGTAG, "Exception during autofocus: " + e);
+				}
 			} else {
-				//if torch mode not supported.
-				params.setFlashMode(Parameters.FLASH_MODE_ON);
+				//Turn flash LED off.
+				params.setFlashMode(Parameters.FLASH_MODE_OFF);
+				mCamera.setParameters(params);
+				
+				/* removed for efficency but requires the 
+				 * utility to close properly  */
+				//releaseCamera(); 
 			}
-			mCamera.setParameters(params);
-			mCamera.startPreview();
-			try{
-				mCamera.autoFocus(autoFocusCallback);
-			} catch (Exception e){
-				//TODO determine which exceptions, if any, throw here
-				Log.w(LOGTAG, "Exception during autofocus: " + e);
-			}
-		} else {
-			//Turn flash LED off.
-			params.setFlashMode(Parameters.FLASH_MODE_OFF);
-			mCamera.setParameters(params);
-			mCamera.stopPreview();
-			mCamera.release();
 		}
 	}
 	/** Closes the utility safely and releases any lingering camera references.
@@ -181,17 +194,45 @@ public class CameraFlashUtil implements SurfaceHolder.Callback {
 	////////////////////////////////////////////////////////////////////////////////////////////////
 	/** Closes and releases camera service. */
 	private void _close() {
-		//avoids camera service hogging.
-		if (mHolder != null){
-			mHolder.removeCallback(this);
-			mHolder = null;
+		synchronized (mCamera) {
+			//avoids camera service hogging.
+			if (mHolder != null){
+				mHolder.removeCallback(this);
+				mHolder = null;
+			}
+			if (mCamera != null){
+				mCamera.setPreviewCallback(null);
+				releaseCamera();
+				mCamera = null;
+			}
 		}
+	}
+	
+	
+	/** Releases camera and sets the {@link #cameraActive} to false. */
+	private void releaseCamera() {
+		mCamera.stopPreview();
+		mCamera.release();
+		cameraActive = false;
+	}
+	
+	
+	/** Opens the camera setting to rear facing and sets
+	 * {@link #cameraActive} to false. 
+	 * @returns <code>false</code> if it fails, <code>true</code> if it succeeds. */
+	private boolean initCamera() {
+		try {			
+			mCamera = Camera.open(Camera.CameraInfo.CAMERA_FACING_BACK );
+		} catch (RuntimeException e){
+			//may fail to connect to service, e.g. simulator
+			Log.w(LOGTAG, "Run time error: " + e);
+			return false;
+		}
+		
 		if (mCamera != null){
-			mCamera.stopPreview();
-			mCamera.setPreviewCallback(null);
-			mCamera.release();
-			mCamera = null;
-		}
+			cameraActive = _setCameraPreview();
+		} 
+		return cameraActive;
 	}
 	
 	/**
@@ -203,21 +244,13 @@ public class CameraFlashUtil implements SurfaceHolder.Callback {
 	 * without incident, <code>false</code> if it has failed.
 	 */
 	private boolean _setCameraSurfaceView(SurfaceView surfaceView){
+		surfaceView.setVisibility(View.VISIBLE);
 		mHolder = surfaceView.getHolder();
 		mHolder.addCallback(this);
-		try {			
-			mCamera = Camera.open(Camera.CameraInfo.CAMERA_FACING_BACK );
-		} catch (RuntimeException e){
-			//may fail to connect to service, e.g. simulator
-			Log.w(LOGTAG, "Run time error: " + e);
-			return false;
-		}
-		
-		if (mCamera != null){
-			return _setCameraPreview();
-		} 
-		return false;
+		surfaceView.setVisibility(View.INVISIBLE);
+		return initCamera();
 	}
+	
 	
 	/**
 	 * Sets the camera preview to the surface view holder.

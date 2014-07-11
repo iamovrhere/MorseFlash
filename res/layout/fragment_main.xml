@@ -63,6 +63,14 @@
 		        android:paddingRight="20dp"
 		        />
 	
+	    <Button
+	        android:id="@+id/com_ovrhere_morseflash_frag_main_button_send"
+	        android:layout_width="match_parent"
+	        android:layout_height="wrap_content"
+	        android:layout_below="@+id/com_ovrhere_morseflash_frag_main_checkbox_useCameraLight"
+	        android:layout_centerHorizontal="true"
+	        android:layout_marginTop="12dp"
+	        android:text="@string/com_ovrhere_sendMessage" />
 	    
 	    <!--  To be "visible" but not seen. Hidden behind send button -->
 	   <SurfaceView
@@ -73,16 +81,9 @@
 	    android:layout_centerHorizontal="true"
 	    android:layout_marginTop="25dp" 
 	    android:focusable="false"
+	    android:visibility="invisible"
 	    />
-	    
-	    <Button
-	        android:id="@+id/com_ovrhere_morseflash_frag_main_button_send"
-	        android:layout_width="match_parent"
-	        android:layout_height="wrap_content"
-	        android:layout_below="@+id/com_ovrhere_morseflash_frag_main_checkbox_useCameraLight"
-	        android:layout_centerHorizontal="true"
-	        android:layout_marginTop="12dp"
-	        android:text="@string/com_ovrhere_sendMessage" />	    
+	        	    
 	    
       <!-- Different layout to avoid relative issues. -->
 	<LinearLayout
