@@ -39,7 +39,7 @@ import com.ovrhere.android.morseflash.utils.CameraFlashUtil;
  * The main activity for the application. This is the primary entry point
  * of the app.
  * @author Jason J.
- * @version 0.5.2-20140624
+ * @version 0.5.3-20140711
  */
 public class MainActivity extends ActionBarActivity implements
 	MainFragment.OnFragmentInteractionListener,
@@ -133,7 +133,7 @@ public class MainActivity extends ActionBarActivity implements
 				morseTranscriber.setOnSignalListener(this);
 			}
 		}
-		morseTranscriber.setOnMorseListener(this);		
+		morseTranscriber.setOnMorseListener(this);
 		
 		if (savedInstanceState == null) {
 			setFragToDefault();
@@ -327,7 +327,7 @@ public class MainActivity extends ActionBarActivity implements
 		if (isMessageByFlashLight){
 			try {
 				if (maincameraFlashUtil != null){
-					maincameraFlashUtil.flashLed(false);
+					maincameraFlashUtil.flashLed(state);
 				}
 			} catch (IllegalStateException e){}
 			
@@ -411,6 +411,8 @@ public class MainActivity extends ActionBarActivity implements
 	public void onCancelButton() {
 		//Overlapping interfaces, how urgent is this to fix?
 		Log.d(CLASS_NAME, "onCancelButton");
+		endMessage();
+		
 		if (currentFragmentTag.equals(MainFragment.TAG)){
 			if (isMessageByFlashLight){
 					isMessageByFlashLight = false;
@@ -420,8 +422,7 @@ public class MainActivity extends ActionBarActivity implements
 					}
 				} catch (IllegalStateException e){}
 			}
-		} 
-		endMessage();
+		}		
 	}
 	
 	@Override
@@ -435,14 +436,14 @@ public class MainActivity extends ActionBarActivity implements
 	
 	@Override
 	public void onSignalStart() {
-		signalAction(true);
 		Log.d(CLASS_NAME, "onSignalStart");
+		signalAction(true);
 	}
 	
 	@Override
 	public void onSignalEnd() {
-		signalAction(false);
 		Log.d(CLASS_NAME, "onSignalEnd");
+		signalAction(false);
 		if (!activityVisible){
 			unseenSignals++;
 			//if not visible, we count the unsceen ticks.
