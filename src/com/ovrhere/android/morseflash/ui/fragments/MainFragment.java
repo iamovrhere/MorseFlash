@@ -16,6 +16,7 @@
 package com.ovrhere.android.morseflash.ui.fragments;
 
 import android.app.Activity;
+import android.content.Context;
 import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
@@ -25,6 +26,7 @@ import android.view.SurfaceView;
 import android.view.View;
 import android.view.View.OnClickListener;
 import android.view.ViewGroup;
+import android.view.inputmethod.InputMethodManager;
 import android.widget.Button;
 import android.widget.CheckBox;
 import android.widget.CompoundButton;
@@ -40,7 +42,7 @@ import com.ovrhere.android.morseflash.utils.CameraFlashUtil;
  * The fragment for main. Activity must implement
  * {@link OnFragmentInteractionListener}.
  * 
- *  @version 0.4.4-20140707
+ *  @version 0.4.5-20140711
  *  @author Jason J.
  */
 public class MainFragment extends Fragment 
@@ -302,6 +304,7 @@ public class MainFragment extends Fragment
 	 * <ul><li> toggles send button's action and string to be send/cancel.
 	 * Send if not sending currently, cancel if sending.</li>
 	 * <li>disables the text field when sending, enables when inactive. </li>
+	 * <li>disables the checkboxes when sending, enables when inactive. </li>
 	 * <ul>
 	 * @param sending <code>true</code> if currently sending, 
 	 * <code>false</code> if not.
@@ -313,6 +316,8 @@ public class MainFragment extends Fragment
 		
 		b_sendMessage.postInvalidate(); //redraw
 		et_messageInput.setEnabled(!sending);
+		cb_useCamFlash.setEnabled(!sending);
+		cb_loopMessage.setEnabled(!sending);
 		isSendingMessage = sending;
 	}
 	
@@ -326,6 +331,17 @@ public class MainFragment extends Fragment
 						value);
 		editor.commit();
 	}
+	
+	/** Hides the virtual keyboard from the screen. */
+	private void hideKeyboard() {
+		et_messageInput.clearFocus();
+		InputMethodManager imm = 
+				(InputMethodManager) getActivity().getSystemService(
+						Context.INPUT_METHOD_SERVICE
+						);
+		imm.hideSoftInputFromWindow(et_messageInput.getWindowToken(), 0);
+	}
+	
 	
 	/////////////////////////////////////////////////////////////////////////////////////////////////
 	/// Listeners
@@ -351,6 +367,7 @@ public class MainFragment extends Fragment
 					setSendingMessage(true);
 				}
 				mFragmentInteractionListener.onSendButton(msg);
+				hideKeyboard();
 			}
 			
 			break;
