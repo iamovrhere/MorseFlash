@@ -39,7 +39,7 @@ import com.ovrhere.android.morseflash.utils.CameraFlashUtil;
  * The main activity for the application. This is the primary entry point
  * of the app.
  * @author Jason J.
- * @version 0.5.3-20140711
+ * @version 0.5.4-20140719
  */
 public class MainActivity extends ActionBarActivity implements
 	MainFragment.OnFragmentInteractionListener,
@@ -60,7 +60,11 @@ public class MainActivity extends ActionBarActivity implements
 			CLASS_NAME + ".KEY_IS_FULLSCREEN";		
 	/** Bundle key: The message for the input screen. String. */
 	final static private String KEY_INPUT_MESSAGE = 
-			CLASS_NAME + ".KEY_INPUT_MESSAGE";	
+			CLASS_NAME + ".KEY_INPUT_MESSAGE";
+	
+	/** Bundle key: The bool for if the message is currently being sent. boolean. */
+	final static private String KEY_IS_SENDING_MESSAGE = 
+			CLASS_NAME + ".KEY_IS_SENDING_MESSAGE";
 		
 	/////////////////////////////////////////////////////////////////////////////////////////////////
 	/// end constants
@@ -85,6 +89,10 @@ public class MainActivity extends ActionBarActivity implements
 	private String inputMessage = "";
 	/** If the message is being sent by flash light. */
 	private boolean isMessageByFlashLight = false;
+	/** If the message is currently being sent. Set <code>true</code> in
+	 * {@link #onSendButton(String)} and <code>false</code> in 
+	 * {@link #onCancelButton()}.	 */
+	private boolean isSending = false;
 	
 	/** Activity visibility. Set on #onResume() and #onPause(); */
 	private boolean activityVisible = false;
@@ -104,6 +112,7 @@ public class MainActivity extends ActionBarActivity implements
 		outState.putString(KEY_CURRENT_FRAG_TAG, currentFragmentTag);
 		outState.putBoolean(KEY_IS_FULLSCREEN, isFullscreen);
 		outState.putString(KEY_INPUT_MESSAGE, inputMessage);
+		outState.putBoolean(KEY_IS_SENDING_MESSAGE, isSending);
 	}
 	
 	@Override
@@ -146,6 +155,7 @@ public class MainActivity extends ActionBarActivity implements
 			if (savedInstanceState.getString(KEY_INPUT_MESSAGE) != null){
 				inputMessage = savedInstanceState.getString(KEY_INPUT_MESSAGE);
 			}
+			isSending =  savedInstanceState.getBoolean(KEY_IS_SENDING_MESSAGE);
 		}
 	}	
 		
@@ -162,7 +172,6 @@ public class MainActivity extends ActionBarActivity implements
 
 	@Override
 	public boolean onCreateOptionsMenu(Menu menu) {
-
 		// Inflate the menu; this adds items to the action bar if it is present.
 		getMenuInflater().inflate(R.menu.main, menu);
 		return true;
@@ -209,7 +218,7 @@ public class MainActivity extends ActionBarActivity implements
 			flashFrag = (ScreenFlashFragment) fragment;
 			flashFrag.flashBackground(false);
 		} else if (fragment instanceof MainFragment){
-			mainFrag = ((MainFragment) fragment);
+			mainFrag = ((MainFragment) fragment);			
 		}
 	}
 	
@@ -366,6 +375,7 @@ public class MainActivity extends ActionBarActivity implements
 			    });
 			}
 		}
+		isSending = false;
 	}
 	
 	/** Gets boolean preference based on bool id. Default value is false. */
@@ -380,14 +390,19 @@ public class MainActivity extends ActionBarActivity implements
 	@Override
 	public void onUpdateCameraFlashUtil(CameraFlashUtil cameraFlashUtil){
 		maincameraFlashUtil = cameraFlashUtil;
+		Log.d(CLASS_NAME, "onUpdateCameraFlashUtil");		
 	}
 	
 	@Override
 	public void onSendButton(String message) {
+		if (isSending){
+			morseTranscriber.cancel();
+		}
 			boolean loop  = 
 				getBoolPref(R.string.com_ovrhere_morseflash_pref_KEY_LOOP_MESSAGE);
 		isMessageByFlashLight = 
 				getBoolPref(R.string.com_ovrhere_morseflash_pref_KEY_USE_CAMERA_FLASH);
+		isSending = true;
 		
 		morseTranscriber.setMessage(message);
 		morseTranscriber.setLoop(loop);

@@ -42,7 +42,7 @@ import com.ovrhere.android.morseflash.utils.CameraFlashUtil;
  * The fragment for main. Activity must implement
  * {@link OnFragmentInteractionListener}.
  * 
- *  @version 0.4.5-20140711
+ *  @version 0.5.0-20140719
  *  @author Jason J.
  */
 public class MainFragment extends Fragment 
@@ -120,11 +120,13 @@ public class MainFragment extends Fragment
 		}
 	}
 	
+	
 	@Override
 	public void onSaveInstanceState(Bundle outState) {
 		super.onSaveInstanceState(outState);
 		outState.putString(KEY_MESSAGE_INPUT_CONTENT, et_messageInput.getText().toString());
 		outState.putBoolean(KEY_SHOW_ADVANCED_TOGGLE, cb_advancedSettings.isChecked());
+		outState.putBoolean(KEY_SENDING_MESSAGE_CURRENTLY, isSendingMessage);
 	}
 
 	@Override
@@ -150,6 +152,15 @@ public class MainFragment extends Fragment
 			et_messageInput.clearFocus();
 			cb_advancedSettings.setChecked(
 						savedInstanceState.getBoolean(KEY_SHOW_ADVANCED_TOGGLE)
+					);
+			setSendingMessage(
+					savedInstanceState.getBoolean(KEY_SENDING_MESSAGE_CURRENTLY)
+					);			
+		}
+		
+		if (isSendingMessage){
+			mFragmentInteractionListener.onSendButton(
+					et_messageInput.getText().toString()
 					);
 		}
 		return rootView;
@@ -203,18 +214,19 @@ public class MainFragment extends Fragment
 		initLoopCheckbox(rootView, prefs);
 		initAdvancedContainerToggle(rootView);
 		
-		initCameraFlashUtil(rootView);
+		initCameraFlashUtil(rootView);		
 		
 		initCameraFlashCheckbox(rootView, cameraFlashUtil);
 	}
 
 	/** Initialises the camera flash utility using the surface view. */
-	private void initCameraFlashUtil(View rootView) {
-		cameraFlashUtil = new CameraFlashUtil(
-				(SurfaceView) 
-					rootView.findViewById(R.id.com_ovrhere_morseflash_frag_main_surfaceview)
-				);		
-		mFragmentInteractionListener.onUpdateCameraFlashUtil(cameraFlashUtil);
+	private void initCameraFlashUtil(final View rootView) {
+		SurfaceView sv = (SurfaceView) 
+				rootView.findViewById(R.id.com_ovrhere_morseflash_frag_main_surfaceview);
+		if (sv != null){
+			cameraFlashUtil = new CameraFlashUtil(sv);		
+			mFragmentInteractionListener.onUpdateCameraFlashUtil(cameraFlashUtil);
+		}
 	}
 
 	/** Initialises the loop message checkbox. 
@@ -284,7 +296,7 @@ public class MainFragment extends Fragment
 		mFragmentInteractionListener.onUpdateCameraFlashUtil(null);
 	}
 	
-	/** Toggles visbility of advanced settings container based on bool passed.
+	/** Toggles visibility of advanced settings container based on bool passed.
 	 * @param show <code>true</code> to show container, 
 	 * <code>false</code> to hide.
 	 */
