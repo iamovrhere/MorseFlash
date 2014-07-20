@@ -52,7 +52,7 @@ import android.view.View;
  *</code>
  * </p>
  * @author Jason J.
- * @version 0.2.4-20140711
+ * @version 0.2.5-20140719
  */
 public class CameraFlashUtil implements SurfaceHolder.Callback {
 	/** The Log tag. */
@@ -140,11 +140,11 @@ public class CameraFlashUtil implements SurfaceHolder.Callback {
 	 * calling {@link #close()}).
 	 */
 	public void flashLed(boolean on) throws IllegalStateException {
-		synchronized (mCamera) {
-			//if not available, quit.
-			if (mCamera == null){
-				throw new IllegalStateException("Flash is not available");
-			}
+		//if not available, quit.
+		if (mCamera == null){
+			throw new IllegalStateException("Flash is not available");
+		}
+		synchronized (mCamera) {			
 			if (!cameraActive){
 				initCamera();
 			}
@@ -194,6 +194,9 @@ public class CameraFlashUtil implements SurfaceHolder.Callback {
 	////////////////////////////////////////////////////////////////////////////////////////////////
 	/** Closes and releases camera service. */
 	private void _close() {
+		if (mCamera == null){
+			return;
+		}
 		synchronized (mCamera) {
 			//avoids camera service hogging.
 			if (mHolder != null){
