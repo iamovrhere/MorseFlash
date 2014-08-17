@@ -30,9 +30,9 @@ import com.ovrhere.android.morseflash.R;
 import com.ovrhere.android.morseflash.morsecode.dictionaries.InternationalMorseCode;
 import com.ovrhere.android.morseflash.morsecode.transcriber.MorseTranscriber;
 import com.ovrhere.android.morseflash.morsecode.transcriber.MorseTranscriberHeadlessFragment;
+import com.ovrhere.android.morseflash.prefs.PreferenceUtils;
 import com.ovrhere.android.morseflash.ui.fragments.MainFragment;
 import com.ovrhere.android.morseflash.ui.fragments.ScreenFlashFragment;
-import com.ovrhere.android.morseflash.ui.prefs.PreferenceUtils;
 import com.ovrhere.android.morseflash.utils.CameraFlashUtil;
 
 /**

@@ -35,7 +35,7 @@ import android.widget.EditText;
 import android.widget.ScrollView;
 
 import com.ovrhere.android.morseflash.R;
-import com.ovrhere.android.morseflash.ui.prefs.PreferenceUtils;
+import com.ovrhere.android.morseflash.prefs.PreferenceUtils;
 import com.ovrhere.android.morseflash.utils.CameraFlashUtil;
 
 /**
