@@ -1,23 +1,25 @@
 #Morse Flash
 
-This app is intended to be a tool for sending morse code via an Android device. 
+This app is intended to be a tool for sending Morse code via an Android device. 
 
-Future versions will include more options & morse->latin letter transcription via the camera.
+Future versions will include more options & Morse->Latin letter transcription via the camera.
 
 ###Notes
 
 The app supports **Android 2.3.3** and up. App is currently a closed alpha/beta in the testing & touch up stages, pending release.
 
-Application requires the compatiblity v7 library. Uses resources from [Android Holo Colors Generator](http://android-holo-colors.com/).
+Application requires the compatibility v7 library. Uses resources from [Android Holo Colors Generator](http://android-holo-colors.com/).
 
 Unit testing is done in another project/repository (to be uploaded later).
 
-Messages are inputted in latin based letters and converted to [international morse code](http://en.wikipedia.org/wiki/Morse_code) according to [official standards](http://www.itu.int/rec/R-REC-M.1677-1-200910-I/).
+Messages are inputted in Latin based letters and converted to [international Morse code](http://en.wikipedia.org/wiki/Morse_code) according to [official standards](http://www.itu.int/rec/R-REC-M.1677-1-200910-I/).
 
 Messages can be sent either by flashing the screen or camera flash.
 
 The camera flash functionality is currently not fully tested and, as such, experimental.
 
+###Screenshots
+![Simulator screen shot of first screen](./screenshots/morseflash_screenshot1.png?raw=true "First screen on simulator") ![Simulator screen shot flashing screen](./screenshots/morseflash_screenshot2.png?raw=true "Flashing screen on simulator")
 
 #License
 ***
