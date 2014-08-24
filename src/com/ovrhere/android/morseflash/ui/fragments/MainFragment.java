@@ -42,7 +42,7 @@ import com.ovrhere.android.morseflash.utils.CameraFlashUtil;
  * The fragment for main. Activity must implement
  * {@link OnFragmentInteractionListener}.
  * 
- *  @version 0.5.0-20140719
+ *  @version 0.5.1-20140821
  *  @author Jason J.
  */
 public class MainFragment extends Fragment 
@@ -148,8 +148,7 @@ public class MainFragment extends Fragment
 		if (savedInstanceState != null){
 			et_messageInput.setText(
 						savedInstanceState.getString(KEY_MESSAGE_INPUT_CONTENT)
-					);
-			et_messageInput.clearFocus();
+					);			
 			cb_advancedSettings.setChecked(
 						savedInstanceState.getBoolean(KEY_SHOW_ADVANCED_TOGGLE)
 					);
@@ -157,7 +156,7 @@ public class MainFragment extends Fragment
 					savedInstanceState.getBoolean(KEY_SENDING_MESSAGE_CURRENTLY)
 					);			
 		}
-		
+		et_messageInput.clearFocus(); //always clear focus
 		if (isSendingMessage){
 			mFragmentInteractionListener.onSendButton(
 					et_messageInput.getText().toString()
